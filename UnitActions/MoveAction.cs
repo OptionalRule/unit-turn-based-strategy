@@ -11,6 +11,9 @@ public class MoveAction : BaseAction
 
     private int maxMoveDistance = 2;
 
+    public event EventHandler OnMoveActionStart;
+    public event EventHandler OnMoveActionStop;
+
     [SerializeField] private Animator unitAnimator;
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private float rotateSpeed = 15f;
@@ -59,19 +62,15 @@ public class MoveAction : BaseAction
         targetMovePosition = LevelGrid.Instance.GridPositionToWorldPosition(gridPosition);
         StartMoving();
     }
-    private void setMoving(bool bMove)
-    {
-        unitAnimator.SetBool("IsWalking", bMove);
-    }
 
     private void StartMoving()
     {
-        setMoving(true);
+        OnMoveActionStart?.Invoke(this, EventArgs.Empty);
     }
 
     private void StopMoving()
     {
-        setMoving(false);
+        OnMoveActionStop?.Invoke(this, EventArgs.Empty);
     }
 
     public override List<GridPosition> GetValidActionGridPositionList()

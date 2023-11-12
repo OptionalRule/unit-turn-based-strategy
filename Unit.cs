@@ -75,6 +75,11 @@ public class Unit : MonoBehaviour
         return unitGridPosition;
     }
 
+    public Vector3 GetWorldPosition()
+    {
+        return transform.position;
+    }
+
     public MoveAction GetMoveAction()
     {
         return moveAction;

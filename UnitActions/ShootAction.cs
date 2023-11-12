@@ -21,6 +21,14 @@ public class ShootAction : BaseAction
     private int maxShootDistance = 9;
     private Unit targetUnit;
 
+    public event EventHandler<OnShootEventArgs> OnShootActionStart;
+
+    public class OnShootEventArgs : EventArgs
+    {
+        public Unit targetUnit;
+        public Unit shootingUnit;
+    }
+
     private void Update()
     {
         if (!IsActive) { return; }
@@ -34,7 +42,7 @@ public class ShootAction : BaseAction
             case State.Shooting:
                 if (stepTimer <= 0f)
                 {
-                    Shoot(targetUnit);
+                    Shoot();
                     state = State.Reloading;
                     ResetStepTimer();
                 }
@@ -130,8 +138,13 @@ public class ShootAction : BaseAction
         ResetStepTimer();
     }
 
-    private void Shoot(Unit unit)
+    private void Shoot()
     {
-        unit.ApplyDamage(50);
+        OnShootActionStart?.Invoke(this, new OnShootEventArgs
+        {
+            targetUnit = targetUnit,
+            shootingUnit = unit
+        });
+        targetUnit.ApplyDamage(50);
     }
 }
