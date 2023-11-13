@@ -6,19 +6,21 @@ using UnityEngine;
 public class BulletProjectile : MonoBehaviour
 {
     private Vector3 targetPosition;
-    [SerializeField] private float speed = 200f;
+    private Vector3 direction;
+    private float speed = 100f;
     public void Setup(Vector3 targetPosition)
     {
         this.targetPosition = targetPosition;
+        direction = (targetPosition - transform.position).normalized;
     }
 
     public void Update()
     {
-        float distanceBefore = Vector3.Distance(transform.position, targetPosition);
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
-        float distanceAfter = Vector3.Distance(transform.position, targetPosition);
+        float startDistance = Vector3.Distance(transform.position, targetPosition);
+        transform.position += direction * speed * Time.deltaTime;
+        float endDistance = Vector3.Distance(transform.position, targetPosition);
 
-        if(distanceBefore < distanceAfter)
+        if(endDistance > startDistance)
         {
             Destroy(gameObject);
         }
