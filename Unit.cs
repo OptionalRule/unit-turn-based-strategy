@@ -47,7 +47,9 @@ public class Unit : MonoBehaviour
             Debug.LogError("Level Grid is not set!");
         }
         unitGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
-        LevelGrid.Instance.AddUnitToGrid(unitGridPosition, this);
+        
+        // Removed as spawner now adds unit to grid.  TODO, refactor move action to handle grid position.
+        // LevelGrid.Instance.AddUnitToGrid(unitGridPosition, this);
 
         // LISTENERS
         TurnSystem.Instance.OnNextTurn += TurnSystem_OnEndTurn;

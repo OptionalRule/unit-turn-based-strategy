@@ -7,12 +7,9 @@ public class GridSquareVisual : MonoBehaviour
 
     [SerializeField] private MeshRenderer meshRenderer;
 
-    private void Start()
+    private void OnValidate()
     {
-        //if(!TryGetComponent<MeshRenderer>(out meshRenderer))
-        //{
-        //    Debug.LogError("Grid Square Visual unable to get mesh renderer!");
-        //}
+        if(meshRenderer == null) { Debug.LogError($"{name} meshRenderer not assigned"); }
     }
 
     public void Show()
@@ -23,10 +20,5 @@ public class GridSquareVisual : MonoBehaviour
     public void Hide()
     {
         meshRenderer.enabled=false;
-    }
-
-    private void OnValidate()
-    {
-        if(meshRenderer == null) { Debug.LogError($"{name} meshRenderer not assigned"); }
     }
 }

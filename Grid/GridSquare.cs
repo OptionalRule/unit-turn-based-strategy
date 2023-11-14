@@ -27,7 +27,16 @@ public class GridSquare
 
     public void AddUnit(Unit unit)
     {
-        this.unitList.Add(unit);
+        // this.unitList.Add(unit);
+        // Check if the unit is already in the list
+        if (!unitList.Contains(unit))
+        {
+            unitList.Add(unit);
+        }
+        else
+        {
+            Debug.LogWarning($"Attempted to add a duplicate unit at position {gridPosition}");
+        }
     }
 
     public void RemoveUnit(Unit unit)
