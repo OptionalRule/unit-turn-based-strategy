@@ -30,6 +30,8 @@ public class Unit : MonoBehaviour
         {
             TurnSystem.Instance.OnNextTurn -= TurnSystem_OnEndTurn;
         }
+
+        LevelGrid.Instance.RemoveUnitFromGrid(unitGridPosition, this);
     }
 
     private void Awake()
@@ -58,23 +60,18 @@ public class Unit : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        UpdateGridPosition();
+
     }
 
-    public void UpdateGridPosition()
-    {
-        GridPosition newGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
-        if (unitGridPosition != newGridPosition)
-        {
-            LevelGrid.Instance.RemoveUnitFromGrid(unitGridPosition, this);
-            unitGridPosition = newGridPosition;
-            LevelGrid.Instance.AddUnitToGrid(unitGridPosition, this);
-        }
-    }
 
     public GridPosition GetGridPosition()
     {
         return unitGridPosition;
+    }
+
+    public void SetGridPosition(GridPosition gridPosition)
+    {
+        unitGridPosition = gridPosition;
     }
 
     public Vector3 GetWorldPosition()

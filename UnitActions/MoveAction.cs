@@ -44,6 +44,7 @@ public class MoveAction : BaseAction
             StopMoving();
             ActionComplete();
         }
+        UpdateGridPosition();
     }
 
     public override bool CanTakeAction(GridPosition gridPosition)
@@ -89,6 +90,17 @@ public class MoveAction : BaseAction
             }
         }
         return validGridPositions;
+    }
+
+    public void UpdateGridPosition()
+    {
+        GridPosition newGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
+        if (unit.GetGridPosition() != newGridPosition)
+        {
+            LevelGrid.Instance.RemoveUnitFromGrid(unit.GetGridPosition(), unit);
+            unit.SetGridPosition(newGridPosition);
+            LevelGrid.Instance.AddUnitToGrid(unit.GetGridPosition(), unit);
+        }
     }
 
     public override string Label()
