@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -29,7 +30,7 @@ public class GunScriptableObject : ScriptableObject
         _shootParticleSystem = _model.GetComponentInChildren<ParticleSystem>();
     }
 
-    private TrailRenderer GetTrail()
+    private TrailRenderer GetTrailRenderer()
     {
         GameObject trail = new GameObject("Bullet Trail");
         TrailRenderer trailRenderer = trail.AddComponent<TrailRenderer>();
@@ -58,7 +59,42 @@ public class GunScriptableObject : ScriptableObject
                     Random.Range(-ShootConfiguration.Spread.z, ShootConfiguration.Spread.z)
                     );
             shootDirection.Normalize(); // Assumes forward is from the muzzel spawn position.
-            // _behaviour.StartCoroutine(ShootCoroutine());
+            
+            // Handles the hit or miss.  For this game need to refactor to however I want to handle in game.
+            if(Physics.Raycast(_model.transform.position, shootDirection, out RaycastHit hit, float.MaxValue, ShootConfiguration.HitMask))
+            {
+                _behaviour.StartCoroutine(PlayTrail(_shootParticleSystem.transform.position, hit.point, hit));
+            } else
+            {
+                _behaviour.StartCoroutine(PlayTrail(_shootParticleSystem.transform.position, shootDirection * TrailConfiguration.MissDistance, new RaycastHit()));
+            }
         }
+    }
+
+    private IEnumerator PlayTrail(Vector3 startPosition, Vector3 endPosition, RaycastHit hit)
+    {
+        TrailRenderer trailRenderer = _trailRendererPool.Get();
+        trailRenderer.gameObject.SetActive(true);
+        trailRenderer.transform.position = startPosition;
+        yield return null; // hack to give is a moment so as not to pull attributes from previous trail render.
+        trailRenderer.transform.LookAt(endPosition);
+        trailRenderer.emitting = true;
+        float distance = Vector3.Distance(startPosition, endPosition);
+        float remainingDistance = distance;
+        while(remainingDistance > 0)
+        {
+            trailRenderer.transform.position = Vector3.Lerp(startPosition, endPosition, Mathf.Clamp01(1 - (remainingDistance / distance)));
+            remainingDistance -= TrailConfiguration.SimulationSpeed * Time.deltaTime;
+            yield return null;
+        }
+        trailRenderer.transform.position = endPosition;
+
+        // If I had surface impact an audio, I would handle it here.
+
+        yield return new WaitForSeconds(TrailConfiguration.TimeToLive);
+        yield return null;
+        trailRenderer.emitting = false;
+        trailRenderer.gameObject.SetActive(false);
+        _trailRendererPool.Release(trailRenderer);
     }
 }
