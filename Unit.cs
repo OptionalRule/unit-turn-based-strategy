@@ -18,9 +18,17 @@ public class Unit : MonoBehaviour
 
     public static event EventHandler OnAnyActionPointChanged;
 
-    private int Health = 100;
+    private HealthSystem healthSystem;
 
-    private void OnDestroy()
+    private void Awake()
+    {
+        moveAction = GetComponent<MoveAction>();
+        spinAction = GetComponent<SpinAction>();
+        baseActionArray = GetComponents<BaseAction>();
+        healthSystem = GetComponent<HealthSystem>();
+    }
+
+    private void OnDisable()
     {
         if (LevelGrid.Instance != null)
         {
@@ -30,16 +38,22 @@ public class Unit : MonoBehaviour
         {
             TurnSystem.Instance.OnNextTurn -= TurnSystem_OnEndTurn;
         }
-
-        LevelGrid.Instance.RemoveUnitFromGrid(unitGridPosition, this);
+        if (healthSystem != null)
+        {
+            healthSystem.OnDead -= HealthSystem_OnDead;
+        }
     }
 
-    private void Awake()
+
+    private void OnEnable()
     {
-        moveAction = GetComponent<MoveAction>();
-        spinAction = GetComponent<SpinAction>();
-        baseActionArray = GetComponents<BaseAction>();
+        if (TurnSystem.Instance == null)
+        {
+            Debug.LogError("Turn System is not set!");
+        }
         ResetActionPoints();
+        TurnSystem.Instance.OnNextTurn += TurnSystem_OnEndTurn;
+        healthSystem.OnDead += HealthSystem_OnDead;
     }
 
     private void Start()
@@ -49,20 +63,10 @@ public class Unit : MonoBehaviour
             Debug.LogError("Level Grid is not set!");
         }
         unitGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
-        
+
         // Removed as spawner now adds unit to grid.  TODO, refactor move action to handle grid position.
         // LevelGrid.Instance.AddUnitToGrid(unitGridPosition, this);
-
-        // LISTENERS
-        TurnSystem.Instance.OnNextTurn += TurnSystem_OnEndTurn;
     }
-
-    // Update is called once per frame
-    private void Update()
-    {
-
-    }
-
 
     public GridPosition GetGridPosition()
     {
@@ -124,6 +128,11 @@ public class Unit : MonoBehaviour
         }
     }
 
+    private void HealthSystem_OnDead(object sender, EventArgs e)
+    {
+        Die();
+    }
+
     public bool IsEnemy()
     {
         return isEnemy;
@@ -134,14 +143,19 @@ public class Unit : MonoBehaviour
         return IsEnemy() != otherUnit.IsEnemy();
     }
 
-    public bool ApplyDamage(int damageAmount)
+    public void ApplyDamage(int damageAmount)
     {
-        Health -= damageAmount;
-        if (Health <= 0)
-        {
-            Destroy(this.gameObject);
-            return true;
-        }
-        return false;
+        healthSystem.ApplyDamage(damageAmount);
+    }
+
+    public bool IsDead()
+    {
+        return healthSystem.IsDead();
+    }
+
+    public void Die()
+    {
+        Debug.Log($"Oh noes!  {name} died!");
+        Destroy(gameObject);
     }
 }

@@ -30,7 +30,7 @@ public class GunScriptableObject : ScriptableObject
         _shootParticleSystem = _model.GetComponentInChildren<ParticleSystem>();
     }
 
-    private TrailRenderer GetTrailRenderer()
+    private TrailRenderer CreateTrail()
     {
         GameObject trail = new GameObject("Bullet Trail");
         TrailRenderer trailRenderer = trail.AddComponent<TrailRenderer>();

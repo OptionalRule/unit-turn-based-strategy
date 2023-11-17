@@ -146,5 +146,9 @@ public class ShootAction : BaseAction
             shootingUnit = unit
         });
         targetUnit.ApplyDamage(50);
+        if (targetUnit.IsDead())
+        {
+            targetUnit.Die();
+        }
     }
 }
