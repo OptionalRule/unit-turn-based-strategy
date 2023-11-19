@@ -9,7 +9,7 @@ public class MoveAction : BaseAction
 {
     private Vector3 targetMovePosition;
 
-    private int maxMoveDistance = 2;
+    private int maxMoveDistance = 7;
 
     public event EventHandler OnMoveActionStart;
     public event EventHandler OnMoveActionStop;
@@ -84,7 +84,12 @@ public class MoveAction : BaseAction
             {
                 GridPosition offsetGridPosition = new GridPosition(x, z);
                 GridPosition targetGridPosition = offsetGridPosition + unitGridPosition;
-                if(!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) {  continue; }
+
+                // Check if distance between grid centers is within the max move distance radius.
+                float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(unitGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
+                if (distance > maxMoveDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
+
+                if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) {  continue; }
                 if(LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; } 
                 validGridPositions.Add(targetGridPosition);
             }

@@ -16,7 +16,7 @@ public class Unit : MonoBehaviour
     [SerializeField] private bool isEnemy = false;
     [SerializeField] private Transform _rootBone;
 
-    public static event EventHandler OnAnyActionPointChanged;
+    public static event EventHandler OnAnyActionPointsChanged;
 
     private HealthSystem healthSystem;
     private UnitRagdollSpawner unitRagdollSpawner;
@@ -108,13 +108,13 @@ public class Unit : MonoBehaviour
     private void ResetActionPoints()
     {
         actionPoints = ACTION_POINT_MAX;
-        OnAnyActionPointChanged?.Invoke(this, EventArgs.Empty);
+        OnAnyActionPointsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void SpendActionPoints(int actionPointCost)
     {
         actionPoints -= actionPointCost;
-        OnAnyActionPointChanged?.Invoke(this, EventArgs.Empty);
+        OnAnyActionPointsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public int GetActionPoints()

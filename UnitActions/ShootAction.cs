@@ -141,7 +141,16 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        Debug.Log(transform.position + " is shooting at " + targetUnit.transform.position);
-        targetUnit.ApplyDamage(100, transform.position);
+        targetUnit.ApplyDamage(RollDice(3, 10), transform.position);
+    }
+
+    private int RollDice(int numberOfDice, int sides)
+    {
+        int total = 0;
+        for (int i = 0; i < numberOfDice; i++)
+        {
+            total += UnityEngine.Random.Range(1, sides + 1); // Random.Range is inclusive for min, exclusive for max
+        }
+        return total;
     }
 }

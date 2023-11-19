@@ -40,7 +40,7 @@ public class UnitActionSystemUI : MonoBehaviour
         UnitActionSystem.Instance.OnIsBusyChanged += UnitActionSystem_OnBusyChanged;
         TurnSystem.Instance.OnNextTurn += TurnSystem_OnNextTurn;
 
-        Unit.OnAnyActionPointChanged += Unit_OnAnyActionPointChanged;
+        Unit.OnAnyActionPointsChanged += Unit_OnAnyActionPointChanged;
     }
 
     private void UnsubscribeFromEvents()
@@ -50,7 +50,7 @@ public class UnitActionSystemUI : MonoBehaviour
         UnitActionSystem.Instance.OnIsBusyChanged -= UnitActionSystem_OnBusyChanged;
         TurnSystem.Instance.OnNextTurn -= TurnSystem_OnNextTurn;
 
-        Unit.OnAnyActionPointChanged -= Unit_OnAnyActionPointChanged;
+        Unit.OnAnyActionPointsChanged -= Unit_OnAnyActionPointChanged;
     }
 
     private void Start()
