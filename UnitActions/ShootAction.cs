@@ -55,7 +55,6 @@ public class ShootAction : BaseAction
                 }
                 break;
         }
-        Debug.Log(state);
     }
 
     private void UpdateAim()
@@ -68,9 +67,6 @@ public class ShootAction : BaseAction
 
         // Rotate the forward vector towards the target direction by one step
         Vector3 newDirection = Vector3.RotateTowards(transform.forward, targetDirection, singleStep, 0.0f);
-
-        // Draw a ray pointing at our target in
-        Debug.DrawRay(transform.position, newDirection, Color.red);
 
         // Calculate a rotation a step closer to the target and applies rotation to this object
         transform.rotation = Quaternion.LookRotation(newDirection);
@@ -145,10 +141,7 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        targetUnit.ApplyDamage(50);
-        if (targetUnit.IsDead())
-        {
-            targetUnit.Die();
-        }
+        Debug.Log(transform.position + " is shooting at " + targetUnit.transform.position);
+        targetUnit.ApplyDamage(100, transform.position);
     }
 }

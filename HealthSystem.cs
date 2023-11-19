@@ -14,15 +14,10 @@ public class HealthSystem : MonoBehaviour
         currentHealth = maxHealth;
     }
 
-    private void OnDisable()
-    {
-        
-    }
-
     public void ApplyDamage(int damage)
     {
         Mathf.Clamp(currentHealth -= damage, 0, maxHealth);
-        if (currentHealth <= 0)
+        if (IsDead())
         {
             OnDead?.Invoke(this, EventArgs.Empty);
         }

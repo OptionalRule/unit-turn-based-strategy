@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(MoveAction))]
 public class Unit : MonoBehaviour
 {
     private GridPosition unitGridPosition;
@@ -12,13 +11,15 @@ public class Unit : MonoBehaviour
     private BaseAction[] baseActionArray;
     private int actionPoints;
     private const int ACTION_POINT_MAX = 3;
+    private Vector3 lastDamageSourcePosition;
 
-    [SerializeField]
-    private bool isEnemy = false;
+    [SerializeField] private bool isEnemy = false;
+    [SerializeField] private Transform _rootBone;
 
     public static event EventHandler OnAnyActionPointChanged;
 
     private HealthSystem healthSystem;
+    private UnitRagdollSpawner unitRagdollSpawner;
 
     private void Awake()
     {
@@ -26,6 +27,7 @@ public class Unit : MonoBehaviour
         spinAction = GetComponent<SpinAction>();
         baseActionArray = GetComponents<BaseAction>();
         healthSystem = GetComponent<HealthSystem>();
+        unitRagdollSpawner = GetComponent<UnitRagdollSpawner>();
     }
 
     private void OnDisable()
@@ -146,6 +148,13 @@ public class Unit : MonoBehaviour
     public void ApplyDamage(int damageAmount)
     {
         healthSystem.ApplyDamage(damageAmount);
+        lastDamageSourcePosition = transform.position;
+    }
+
+    public void ApplyDamage(int damageAmount, Vector3 damageSourcePosition)
+    {
+        lastDamageSourcePosition = damageSourcePosition; // This needs to get set first or the evne tis called before it's set.
+        healthSystem.ApplyDamage(damageAmount);
     }
 
     public bool IsDead()
@@ -155,7 +164,12 @@ public class Unit : MonoBehaviour
 
     public void Die()
     {
-        Debug.Log($"Oh noes!  {name} died!");
+        unitRagdollSpawner.SpawnRagdoll(this, lastDamageSourcePosition);
         Destroy(gameObject);
+    }
+
+    public Transform GetRootBone()
+    {
+        return _rootBone;
     }
 }

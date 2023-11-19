@@ -2,14 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerUnitSpawner : MonoBehaviour
+public class UnitSpawner : MonoBehaviour
 {
 
-    [SerializeField] private Unit PlayerUnitPrefab;
+    [SerializeField] private Unit unitPrefab;
+    [SerializeField] private int spawnNumber = 1;
+    [SerializeField] private int maxSpawnDistance = 1;
 
     private void OnValidate()
     {
-        if (PlayerUnitPrefab == null)
+        if (unitPrefab == null)
         {
             Debug.LogError("PlayerUnitPrefab is not set in the inspector!");
         }
@@ -19,10 +21,10 @@ public class PlayerUnitSpawner : MonoBehaviour
     void Start()
     {
         // if the game object is not on a valid grid square, log error and return.
-        SpawnPlayerUnits(2, 1);
+        SpawnUnits();
     }
 
-    private void SpawnPlayerUnits(int spawnNumber, int maxSpawnDistance)
+    private void SpawnUnits()
     {
         GridPosition spawnerGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(transform.position);
 
@@ -44,9 +46,9 @@ public class PlayerUnitSpawner : MonoBehaviour
 
             // Spawn player unit at the world position of the chosen grid position
             Vector3 spawnPosition = LevelGrid.Instance.GridPositionToWorldPosition(randomGridPosition);
-            Unit playerUnit = Instantiate(PlayerUnitPrefab, spawnPosition, Quaternion.identity, transform);
-
-            LevelGrid.Instance.AddUnitToGrid(randomGridPosition, playerUnit);
+            Unit unit = Instantiate(unitPrefab, spawnPosition, transform.rotation, transform);
+ 
+            LevelGrid.Instance.AddUnitToGrid(randomGridPosition, unit);
         }
 
     }
@@ -71,7 +73,19 @@ public class PlayerUnitSpawner : MonoBehaviour
     // This method is called in the editor to draw gizmos
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.blue; // Set the color of the gizmo
-        Gizmos.DrawWireSphere(transform.position, 1f); // Draw a wireframe sphere at the spawner's position
+        Gizmos.color = Color.blue; // Set the color of the gizmo for the sphere
+        Gizmos.DrawWireSphere(transform.position, 0.5f); // Draw a wireframe sphere at the spawner's position
+
+        // Draw an arrow indicating the forward direction
+        Vector3 forward = transform.forward * 1.0f; // Length of the arrow
+        Gizmos.color = Color.green; // Set a different color for the arrow for visibility
+        Gizmos.DrawRay(transform.position, forward); // Draw the arrow as a line
+
+        // Optionally, you can also draw a small triangle at the end of the arrow for a more arrow-like appearance
+        // Adjust the size and angle of the triangle to your preference
+        //Vector3 right = Quaternion.LookRotation(forward) * Quaternion.Euler(0, 180 + 30, 0) * new Vector3(0, 0, 1);
+        //Vector3 left = Quaternion.LookRotation(forward) * Quaternion.Euler(0, 180 - 30, 0) * new Vector3(0, 0, 1);
+        //Gizmos.DrawRay(transform.position + forward, right * 0.25f);
+        //Gizmos.DrawRay(transform.position + forward, left * 0.25f);
     }
 }
