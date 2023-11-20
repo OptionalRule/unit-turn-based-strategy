@@ -23,6 +23,9 @@ public class ShootAction : BaseAction
 
     public event EventHandler<OnShootEventArgs> OnShootActionStart;
 
+    public static event EventHandler<OnShootEventArgs> OnAnyShootActionStart;
+    public static event EventHandler<EventArgs> OnAnyShootActionEnd;
+
     public class OnShootEventArgs : EventArgs
     {
         public Unit targetUnit;
@@ -52,6 +55,7 @@ public class ShootAction : BaseAction
                 {
                     ActionComplete();
                     state = State.Idle;
+                    OnAnyShootActionEnd?.Invoke(this, EventArgs.Empty);
                 }
                 break;
         }
@@ -75,14 +79,24 @@ public class ShootAction : BaseAction
         if (Vector3.Angle(transform.forward, targetDirection) < 1f)
         {
             // If yes, then the aiming is done, and we should start shooting.
+            OnAnyShootActionStart?.Invoke(this, new OnShootEventArgs
+            {
+                targetUnit = targetUnit,
+                shootingUnit = unit
+            });
             state = State.Shooting;
-            ResetStepTimer(); // Assuming you also want to reset the timer for the shooting phase.
+            ResetStepTimer(stateTimer * 1.5f); // Assuming you also want to reset the timer for the shooting phase.
         }
+    }
+
+    private void ResetStepTimer(float seconds)
+    {
+        stepTimer = seconds;
     }
 
     private void ResetStepTimer()
     {
-        stepTimer = stateTimer;
+        ResetStepTimer(stateTimer);
     }
 
     public override bool CanTakeAction(GridPosition gridPosition)

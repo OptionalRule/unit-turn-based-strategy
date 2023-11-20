@@ -51,12 +51,6 @@ public class GridSystemVisual : MonoBehaviour
         HideAllGridPositions();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void UpdateGridVisual()
     {
         HideAllGridPositions();

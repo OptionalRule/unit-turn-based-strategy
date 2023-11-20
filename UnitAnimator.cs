@@ -11,6 +11,7 @@ public class UnitAnimator : MonoBehaviour
 
     MoveAction moveAction;
     ShootAction shootAction;
+    HealthSystem healthSystem;
 
     private void OnValidate()
     {
@@ -35,6 +36,14 @@ public class UnitAnimator : MonoBehaviour
         {
             Debug.LogError("UnitAnimator is unable to get the shootaction component!");
         }
+        if (TryGetComponent<HealthSystem>(out healthSystem))
+        {
+            healthSystem.OnRecieveDamage += HealthSystem_OnRecieveDamage;
+        }
+        else
+        {
+            Debug.LogError("UnitAnimator is unable to get the healthsystem component!");
+        }
     }
 
     private void OnDestroy()
@@ -47,6 +56,10 @@ public class UnitAnimator : MonoBehaviour
         if(shootAction != null)
         {
             shootAction.OnShootActionStart -= ShootAction_OnShootActionStart;
+        }
+        if(healthSystem != null)
+        {
+            healthSystem.OnRecieveDamage -= HealthSystem_OnRecieveDamage;
         }
     }
 
@@ -71,5 +84,10 @@ public class UnitAnimator : MonoBehaviour
         aimPoint.y = bulletSpawnPoint.position.y;
 
         bulletProjectile.Setup(aimPoint);
+    }
+
+    private void HealthSystem_OnRecieveDamage(object sender, EventArgs e)
+    {
+        animator.SetTrigger("DoHitReaction");
     }
 }

@@ -9,6 +9,7 @@ public class HealthSystem : MonoBehaviour
     public int currentHealth { private set; get; }
     public event EventHandler OnDead;
     public event EventHandler OnHealthChanged;
+    public event EventHandler OnRecieveDamage;
 
     private void OnEnable()
     {
@@ -19,6 +20,7 @@ public class HealthSystem : MonoBehaviour
     {
         Mathf.Clamp(currentHealth -= damage, 0, maxHealth);
         OnHealthChanged?.Invoke(this, EventArgs.Empty);
+        OnRecieveDamage?.Invoke(this, EventArgs.Empty);
         if (IsDead())
         {
             OnDead?.Invoke(this, EventArgs.Empty);

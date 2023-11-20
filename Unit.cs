@@ -15,6 +15,8 @@ public class Unit : MonoBehaviour
 
     [SerializeField] private bool isEnemy = false;
     [SerializeField] private Transform _rootBone;
+    [SerializeField] private List<Transform> _actionCameraPositions;
+    [SerializeField] private Transform _targetSpot;
 
     public static event EventHandler OnAnyActionPointsChanged;
 
@@ -171,5 +173,17 @@ public class Unit : MonoBehaviour
     public Transform GetRootBone()
     {
         return _rootBone;
+    }
+
+    public Vector3 GetRandomActionCameraPosition()
+    {
+        Transform actionCamera = _actionCameraPositions[UnityEngine.Random.Range(0, _actionCameraPositions.Count)];
+        Debug.Log("Action Camera is " + actionCamera.name);
+        return actionCamera.position;
+    }
+
+    public Vector3 GetTargetPoint()
+    {
+        return _targetSpot.position;
     }
 }
