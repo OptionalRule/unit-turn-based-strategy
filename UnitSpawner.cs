@@ -8,6 +8,8 @@ public class UnitSpawner : MonoBehaviour
     [SerializeField] private Unit unitPrefab;
     [SerializeField] private int spawnNumber = 1;
     [SerializeField] private int maxSpawnDistance = 1;
+    [SerializeField] private bool spawnOnStart = true;
+    [SerializeField] private string unitBaseName = "Unit";
 
     private void OnValidate()
     {
@@ -21,7 +23,10 @@ public class UnitSpawner : MonoBehaviour
     void Start()
     {
         // if the game object is not on a valid grid square, log error and return.
-        SpawnUnits();
+        if (spawnOnStart)
+        {
+            SpawnUnits();
+        }
     }
 
     private void SpawnUnits()
@@ -47,6 +52,7 @@ public class UnitSpawner : MonoBehaviour
             // Spawn player unit at the world position of the chosen grid position
             Vector3 spawnPosition = LevelGrid.Instance.GridPositionToWorldPosition(randomGridPosition);
             Unit unit = Instantiate(unitPrefab, spawnPosition, transform.rotation, transform);
+            unit.name = $"{unitBaseName} {i}";
  
             LevelGrid.Instance.AddUnitToGrid(randomGridPosition, unit);
         }

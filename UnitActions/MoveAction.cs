@@ -21,7 +21,7 @@ public class MoveAction : BaseAction
 
     private void Start()
     {
-        actionPointCost = 2;
+        actionColor = Color.green;
     }
 
     // Update is called once per frame

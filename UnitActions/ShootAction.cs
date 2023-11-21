@@ -32,6 +32,11 @@ public class ShootAction : BaseAction
         public Unit shootingUnit;
     }
 
+    private void Start()
+    {
+        actionColor = Color.red;
+    }
+
     private void Update()
     {
         if (!IsActive) { return; }
@@ -155,7 +160,7 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        targetUnit.ApplyDamage(RollDice(3, 10), transform.position);
+        targetUnit.ApplyDamage(RollDice(7, 10), transform.position);
     }
 
     private int RollDice(int numberOfDice, int sides)

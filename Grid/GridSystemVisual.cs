@@ -48,13 +48,7 @@ public class GridSystemVisual : MonoBehaviour
                 }
             }
         }
-        HideAllGridPositions();
-    }
-
-    public void UpdateGridVisual()
-    {
-        HideAllGridPositions();
-        ShowGridPositions(UnitActionSystem.Instance.GetSelectedAction().GetValidActionGridPositionList());
+        // HideAllGridPositions();
     }
 
     public void HideAllGridPositions()
@@ -68,11 +62,24 @@ public class GridSystemVisual : MonoBehaviour
         }
     }
 
-    public void ShowGridPositions(List<GridPosition> gridPositions)
+    public void ResetAllGridPositions()
+    {
+        for (int x = 0; x < LevelGrid.Instance.GetWidth(); x++)
+        {
+            for (int z = 0; z < LevelGrid.Instance.GetHeight(); z++)
+            {
+                gridSquareVisualArray[x, z].ResetColor();
+            }
+        }
+    }
+
+    public void ShowGridPositions(List<GridPosition> gridPositions, Color actionColor)
     {
         foreach(GridPosition gridPosition in gridPositions)
         {
-            gridSquareVisualArray[gridPosition.X, gridPosition.Z].Show();
+            GridSquareVisual gs = gridSquareVisualArray[gridPosition.X, gridPosition.Z];
+            gs.SetColor(actionColor);
+            gs.Show();
         }
     }
 }

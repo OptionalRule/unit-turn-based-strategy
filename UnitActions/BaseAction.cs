@@ -8,6 +8,7 @@ public abstract class BaseAction : MonoBehaviour
     protected Unit unit;
     protected bool IsActive = false;
     protected int actionPointCost = 1;
+    protected Color actionColor = Color.white;
 
     public Action OnActionCompleted;
 
@@ -53,5 +54,10 @@ public abstract class BaseAction : MonoBehaviour
     public override string ToString()
     {
         return Label();
+    }
+
+    public virtual Color GetActionColor()
+    {
+        return actionColor;
     }
 }

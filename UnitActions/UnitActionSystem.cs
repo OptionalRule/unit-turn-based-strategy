@@ -106,15 +106,17 @@ public class UnitActionSystem : MonoBehaviour
 
     public void SetSelectedAction(BaseAction action)
     {
-        GridSystemVisual.Instance.HideAllGridPositions();
+        GridSystemVisual.Instance.ResetAllGridPositions();
         selectedAction = action;
-        GridSystemVisual.Instance.ShowGridPositions(selectedAction.GetValidActionGridPositionList());
+        GridSystemVisual.Instance.ShowGridPositions(
+            selectedAction.GetValidActionGridPositionList(), 
+            action.GetActionColor());
         OnSelectedActionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void ClearSelectedAction()
     {
-        GridSystemVisual.Instance.HideAllGridPositions();
+        GridSystemVisual.Instance.ResetAllGridPositions();
         selectedAction = null;
         OnSelectedActionChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -126,7 +128,7 @@ public class UnitActionSystem : MonoBehaviour
             SetBusy();
             selectedUnit.SpendActionPoints(selectedAction.GetActionPointCost());
             selectedAction.TakeAction(gridPosition, ClearBusy);
-            GridSystemVisual.Instance.HideAllGridPositions();
+            GridSystemVisual.Instance.ResetAllGridPositions();
             OnSelectedActionChanged?.Invoke(this, EventArgs.Empty);
         }
         else

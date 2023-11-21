@@ -10,7 +10,7 @@ public class Unit : MonoBehaviour
     private SpinAction spinAction;
     private BaseAction[] baseActionArray;
     private int actionPoints;
-    private const int ACTION_POINT_MAX = 3;
+    private const int ACTION_POINT_MAX = 2;
     private Vector3 lastDamageSourcePosition;
 
     [SerializeField] private bool isEnemy = false;
@@ -19,6 +19,8 @@ public class Unit : MonoBehaviour
     [SerializeField] private Transform _targetSpot;
 
     public static event EventHandler OnAnyActionPointsChanged;
+    public static event EventHandler OnAnyUnitSpawned;
+    public static event EventHandler OnAnyUnitDead;
 
     private HealthSystem healthSystem;
     private UnitRagdollSpawner unitRagdollSpawner;
@@ -68,8 +70,7 @@ public class Unit : MonoBehaviour
         }
         unitGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
 
-        // Removed as spawner now adds unit to grid.  TODO, refactor move action to handle grid position.
-        // LevelGrid.Instance.AddUnitToGrid(unitGridPosition, this);
+        OnAnyUnitSpawned?.Invoke(this, EventArgs.Empty);
     }
 
     public GridPosition GetGridPosition()
@@ -167,6 +168,7 @@ public class Unit : MonoBehaviour
     public void Die()
     {
         unitRagdollSpawner.SpawnRagdoll(this, lastDamageSourcePosition);
+        OnAnyUnitDead?.Invoke(this, EventArgs.Empty);
         Destroy(gameObject);
     }
 
@@ -178,7 +180,6 @@ public class Unit : MonoBehaviour
     public Vector3 GetRandomActionCameraPosition()
     {
         Transform actionCamera = _actionCameraPositions[UnityEngine.Random.Range(0, _actionCameraPositions.Count)];
-        Debug.Log("Action Camera is " + actionCamera.name);
         return actionCamera.position;
     }
 
