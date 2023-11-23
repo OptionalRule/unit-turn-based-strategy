@@ -142,7 +142,7 @@ public class ShootAction : BaseAction
     public override void TakeAction(GridPosition gridPosition, Action callback)
     {
         targetUnit = LevelGrid.Instance.GetUnitAtGridPosition(gridPosition);
-        if (!targetUnit || !targetUnit.IsEnemy())
+        if (!targetUnit || !targetUnit.IsEnemyOf(unit))
         {
             Debug.LogError("ShootAction: Invalid target unit");
             return;

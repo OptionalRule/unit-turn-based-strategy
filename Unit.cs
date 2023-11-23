@@ -8,6 +8,7 @@ public class Unit : MonoBehaviour
     private GridPosition unitGridPosition;
     private MoveAction moveAction;
     private SpinAction spinAction;
+    private ShootAction shootAction;
     private BaseAction[] baseActionArray;
     private int actionPoints;
     private const int ACTION_POINT_MAX = 2;
@@ -29,6 +30,7 @@ public class Unit : MonoBehaviour
     {
         moveAction = GetComponent<MoveAction>();
         spinAction = GetComponent<SpinAction>();
+        shootAction = GetComponent<ShootAction>();
         baseActionArray = GetComponents<BaseAction>();
         healthSystem = GetComponent<HealthSystem>();
         unitRagdollSpawner = GetComponent<UnitRagdollSpawner>();
@@ -96,6 +98,11 @@ public class Unit : MonoBehaviour
     public SpinAction GetSpinAction()
     {
         return spinAction;
+    }
+
+    public ShootAction GetShootAction()
+    {
+        return shootAction;
     }
 
     public BaseAction[] GetBaseActions()

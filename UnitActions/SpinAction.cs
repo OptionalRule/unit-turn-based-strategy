@@ -36,7 +36,7 @@ public class SpinAction : BaseAction
 
     public override bool CanTakeAction(GridPosition gridPosition)
     {
-        return true;
+        return unit.GetGridPosition() == gridPosition;
     }
 
     public override void TakeAction(GridPosition gridPosition, Action callback)

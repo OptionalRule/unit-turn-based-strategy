@@ -17,14 +17,14 @@ public class UnitWorldUI : MonoBehaviour
     {
         Unit.OnAnyActionPointsChanged += Unit_OnAnyActionPointsChanged;
         healthSystem.OnHealthChanged += HealthSystem_OnHealthChanged;
-        if (unit.IsEnemy())
-        {
-            actionPointsText.gameObject.SetActive(false);
-        }
-        else
-        {
-            actionPointsText.gameObject.SetActive(true);
-        }
+        //if (unit.IsEnemy())
+        //{
+        //    actionPointsText.gameObject.SetActive(false);
+        //}
+        //else
+        //{
+        //    actionPointsText.gameObject.SetActive(true);
+        //}
     }
 
     private void OnDisable()

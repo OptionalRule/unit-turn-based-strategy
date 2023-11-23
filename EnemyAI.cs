@@ -8,20 +8,29 @@ public class EnemyAI : MonoBehaviour
 
     private enum State
     {
-        WaitingForTurn,
-        TakingTurn,
+        WaitingForEnemyTurn,
+        StartingEnemyTurn,
+        SelectingActiveUnit,
+        SelectingAction,
+        TakingUnitAction,
         Busy,
-        Dead
+        EndingTurn
     }
 
     private State currentState;
+    private Unit activeUnit;
+    private BaseAction selectedAction;
+    private Queue<Unit> enemyUnits;
 
     private float timer;
 
+    private void Awake()
+    {
+        currentState = State.WaitingForEnemyTurn;
+    }
 
     void Start()
     {
-        currentState = State.WaitingForTurn;
         TurnSystem.Instance.OnNextTurn += TurnSystem_OnTurnChanged;
     }
 
@@ -33,76 +42,130 @@ public class EnemyAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (TurnSystem.Instance.IsPlayerTurn() || currentState == State.Dead)
+        if (TurnSystem.Instance.IsPlayerTurn())
         {
             return;
         }
         
         switch (currentState)
         {
-            case State.WaitingForTurn:
-                // Debug.Log($"{gameObject.name} State: {currentState}");
+            case State.WaitingForEnemyTurn:
                 break;
-            case State.TakingTurn:
-                TakeTurn();
+            case State.StartingEnemyTurn:
+                StartEnemyTurn();
+                break;
+            case State.SelectingActiveUnit:
+                SelectActiveUnit();
+                break;
+            case State.SelectingAction:
+                SelectAction();
+                break;
+            case State.TakingUnitAction:
+                timer -= Time.deltaTime;
+                if (timer <= 0f)
+                {
+                    currentState = State.Busy;
+                    HandleSelectedAction();
+                }
                 break;
             case State.Busy:
                 break;
-            case State.Dead:
+            case State.EndingTurn:
+                TurnSystem.Instance.NextTurn();
                 break;
             default:
                 break;
         }
     }
 
-    private void TakeTurn()
+    private void StartEnemyTurn()
     {
-        timer -= Time.deltaTime;
-        if (timer <= 0)
+        enemyUnits = new Queue<Unit>(UnitManager.Instance.GetEnemyUnits());
+        if (enemyUnits.Count > 0)
         {
-            TakeEnemyAITurn(() =>
-            {
-                currentState = State.WaitingForTurn;
-                TurnSystem.Instance.NextTurn();
-            });
+               currentState = State.SelectingActiveUnit;
+        } else
+        {
+            TurnSystem.Instance.NextTurn(); // Waiting state set in TurnSystem_OnTurnChanged
         }
     }
 
-    private void TakeEnemyAITurn(Action onEnemyAIActionComplete)
+    private void SelectActiveUnit()
     {
-        foreach (Unit unit in UnitManager.Instance.GetEnemyUnits())
+        selectedAction = null;
+        if (activeUnit != null && activeUnit.GetActionPoints() > 0)
         {
-            if (unit.IsDead())
-            {
-                continue;
-            }
-
-            TakeEnemyUnitAIAction(unit, () =>
-            {
-                Debug.Log($"{unit.name} done with turn.");
-            });
+            currentState = State.SelectingAction;
+            return;
         }
-        onEnemyAIActionComplete?.Invoke();
+        
+        if (enemyUnits.Count > 0)
+        {
+            ChangeActiveUnit(enemyUnits.Dequeue());
+        } else
+        {
+            TurnSystem.Instance.NextTurn(); // Waiting state set in TurnSystem_OnTurnChanged
+        }
     }
 
-    private void TakeEnemyUnitAIAction(Unit enemyUnit, Action onEnemyUnitAIActionComplete)
+    private void SelectAction()
     {
-        SpinAction spinAction = enemyUnit.GetSpinAction();
+        if (activeUnit.GetActionPoints() <= 0)
+        {
+            currentState = State.SelectingActiveUnit;
+            return;
+        }
+        selectedAction = activeUnit.GetShootAction();
+        timer = 1f;
+        currentState = State.TakingUnitAction;
+    }
 
-        GridPosition gridPosition = enemyUnit.GetGridPosition();
-        if(!spinAction.CanTakeAction(gridPosition))
+    private void HandleSelectedAction()
+    {
+        if (selectedAction == null)
         {
-            onEnemyUnitAIActionComplete?.Invoke();
+            Debug.LogError("No action selected!");
+            currentState = State.SelectingAction;
             return;
         }
-        if(!enemyUnit.CanSpendActionPointsToTakeAction(spinAction))
+        GridPosition gridPosition = GetRandomPlayerGridPosition();
+        if (activeUnit.CanSpendActionPointsToTakeAction(selectedAction) && 
+            selectedAction.CanTakeAction(gridPosition))
         {
-            onEnemyUnitAIActionComplete?.Invoke();
-            return;
-        }
-        spinAction.TakeAction(gridPosition, () =>
-        {
-            onEnemyUnitAIActionComplete?.Invoke();
+            activeUnit.SpendActionPoints(selectedAction.GetActionPointCost());
+            selectedAction.TakeAction(gridPosition, () =>
+            {
+                currentState = State.SelectingAction;
+            });
+        } 
+    }
+
+    private GridPosition GetRandomPlayerGridPosition()
+    {
+        List<Unit> playerUnits = UnitManager.Instance.GetPlayerUnits();
+        Unit randomPlayerUnit = playerUnits[UnityEngine.Random.Range(0, playerUnits.Count)];
+        return randomPlayerUnit.GetGridPosition();
+    }
+
+    private void ChangeActiveUnit(Unit unit) { 
+        activeUnit = unit;
+        currentState = State.SelectingAction;
+        Debug.Log("Active unit changed to " + activeUnit.name); 
+    }
+
+    private void ClearEnemyAI()
+    {
+        activeUnit = null;
+        enemyUnits = null;
+    }
+
+    private void HandleShootAction()
+    {
+        List<Unit> targetList = UnitManager.Instance.GetPlayerUnits();
+        Unit target = targetList[UnityEngine.Random.Range(0, targetList.Count)];
+        ShootAction shootAction = activeUnit.GetShootAction();
+        shootAction.TakeAction(target.GetGridPosition(), () => { 
+            activeUnit.SpendActionPoints(shootAction.GetActionPointCost());
         });
     }
 
@@ -110,12 +173,14 @@ public class EnemyAI : MonoBehaviour
     {
         if (!TurnSystem.Instance.IsPlayerTurn())
         {
-            currentState = State.TakingTurn;
-            timer = 2f;
+            currentState = State.StartingEnemyTurn;
+            timer = 1f;
         }
         else
         {
-            currentState = State.WaitingForTurn;
+            ClearEnemyAI();
+            currentState = State.WaitingForEnemyTurn;
         }
     }
+
 }

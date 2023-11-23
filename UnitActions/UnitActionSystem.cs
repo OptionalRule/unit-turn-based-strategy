@@ -77,8 +77,17 @@ public class UnitActionSystem : MonoBehaviour
 
     private bool IsUnitSelectable(Unit unit)
     {
-        // Determine if no unit is selected, the unit is the same, or the unit is an enemy
-        return selectedUnit != unit && !unit.IsEnemy();
+        if (TurnSystem.Instance.IsPlayerTurn())
+        {
+            // Only allow player units to be selected on player turn.
+            return selectedUnit != unit && !unit.IsEnemy();
+        }
+        else
+        {
+            // Only allow enemy units to be selected on enemy turn.
+            return selectedUnit != unit && unit.IsEnemy();
+        }
+        
     }
 
     private void ChangeSelectedUnit(Unit unit)
