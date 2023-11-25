@@ -112,4 +112,20 @@ public class MoveAction : BaseAction
     {
         return "Move";
     }
+
+    public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
+    {
+        int _actionValue = 0;
+        int targetCountAtPosition = unit.GetShootAction().GetTargetCountAtGridPosition(gridPosition);
+        if (targetCountAtPosition > 0)
+        {
+            _actionValue = Mathf.Clamp(110 - (10 * targetCountAtPosition), 0, 100);
+        }
+
+        return new EnemyAIAction
+        {
+            gridPosition = gridPosition,
+            actionValue = _actionValue
+        };
+    }
 }

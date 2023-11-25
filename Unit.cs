@@ -7,7 +7,7 @@ public class Unit : MonoBehaviour
 {
     private GridPosition unitGridPosition;
     private MoveAction moveAction;
-    private SpinAction spinAction;
+    private DodgeAction dodgeAction;
     private ShootAction shootAction;
     private BaseAction[] baseActionArray;
     private int actionPoints;
@@ -26,10 +26,12 @@ public class Unit : MonoBehaviour
     private HealthSystem healthSystem;
     private UnitRagdollSpawner unitRagdollSpawner;
 
+    private List<UnitCondition> unitConditions = new List<UnitCondition>();
+
     private void Awake()
     {
         moveAction = GetComponent<MoveAction>();
-        spinAction = GetComponent<SpinAction>();
+        dodgeAction = GetComponent<DodgeAction>();
         shootAction = GetComponent<ShootAction>();
         baseActionArray = GetComponents<BaseAction>();
         healthSystem = GetComponent<HealthSystem>();
@@ -95,9 +97,9 @@ public class Unit : MonoBehaviour
         return moveAction;
     }
 
-    public SpinAction GetSpinAction()
+    public DodgeAction GetDodgeAction()
     {
-        return spinAction;
+        return dodgeAction;
     }
 
     public ShootAction GetShootAction()
@@ -138,6 +140,8 @@ public class Unit : MonoBehaviour
         {
             ResetActionPoints();
         }
+
+        unitConditions.Clear();
     }
 
     private void HealthSystem_OnDead(object sender, EventArgs e)
@@ -193,5 +197,15 @@ public class Unit : MonoBehaviour
     public Vector3 GetTargetPoint()
     {
         return _targetSpot.position;
+    }
+
+    public void AddCondition(UnitCondition unitCondition)
+    {
+        unitConditions.Add(unitCondition);
+    }
+
+    public bool HasCondition(UnitCondition unitCondition)
+    {
+        return unitConditions.Contains(unitCondition);
     }
 }

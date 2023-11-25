@@ -115,9 +115,44 @@ public class EnemyAI : MonoBehaviour
             currentState = State.SelectingActiveUnit;
             return;
         }
-        selectedAction = activeUnit.GetShootAction();
-        timer = 1f;
-        currentState = State.TakingUnitAction;
+
+        EnemyAIAction bestEnemyAIAction = null;
+        BaseAction bestBaseAction = null;
+        foreach (BaseAction baseAction in activeUnit.GetBaseActions())
+        {
+            if(!activeUnit.CanSpendActionPointsToTakeAction(baseAction))
+            {
+                continue;
+            }
+
+            if (bestEnemyAIAction == null)
+            {
+                bestEnemyAIAction = baseAction.GetBestEnemyAIAction();
+                bestBaseAction = baseAction;
+            } else
+            {
+                EnemyAIAction possibleEnemyAIAction = baseAction.GetBestEnemyAIAction();
+                if (possibleEnemyAIAction != null &&
+                    possibleEnemyAIAction.actionValue > bestEnemyAIAction.actionValue)
+                {
+                    bestEnemyAIAction = possibleEnemyAIAction;
+                    bestBaseAction = baseAction;
+                }
+            }
+        }
+
+        Debug.Log($"Best action for {activeUnit.name} is {bestBaseAction} with value {bestEnemyAIAction.actionValue}");
+
+        if (bestBaseAction != null && activeUnit.CanSpendActionPointsToTakeAction(bestBaseAction))
+        {
+            selectedAction = bestBaseAction;
+            timer = 1f;
+            currentState = State.TakingUnitAction;
+        } else
+        {
+            activeUnit.SpendActionPoints(activeUnit.GetActionPoints());
+            currentState = State.SelectingActiveUnit;
+        }
     }
 
     private void HandleSelectedAction()
@@ -157,16 +192,6 @@ public class EnemyAI : MonoBehaviour
     {
         activeUnit = null;
         enemyUnits = null;
-    }
-
-    private void HandleShootAction()
-    {
-        List<Unit> targetList = UnitManager.Instance.GetPlayerUnits();
-        Unit target = targetList[UnityEngine.Random.Range(0, targetList.Count)];
-        ShootAction shootAction = activeUnit.GetShootAction();
-        shootAction.TakeAction(target.GetGridPosition(), () => { 
-            activeUnit.SpendActionPoints(shootAction.GetActionPointCost());
-        });
     }
 
     private void TurnSystem_OnTurnChanged(object sender, System.EventArgs e)

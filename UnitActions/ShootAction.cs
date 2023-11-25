@@ -111,18 +111,23 @@ public class ShootAction : BaseAction
 
     public override List<GridPosition> GetValidActionGridPositionList()
     {
-        List<GridPosition> validGridPositions = new List<GridPosition>();
         GridPosition unitGridPosition = unit.GetGridPosition();
+        return GetValidActionGridPositionList(unitGridPosition);
+    }
+
+    public List<GridPosition> GetValidActionGridPositionList(GridPosition fromGridPosition)
+    {
+        List<GridPosition> validGridPositions = new List<GridPosition>();
         for (int x = -maxShootDistance; x <= maxShootDistance; x++)
         {
             for (int z = -maxShootDistance; z <= maxShootDistance; z++)
             {
                 GridPosition offsetGridPosition = new GridPosition(x, z);
-                GridPosition targetGridPosition = offsetGridPosition + unitGridPosition;
+                GridPosition targetGridPosition = offsetGridPosition + fromGridPosition;
                 if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) { continue; }
 
                 // Check if the target is within the max shoot distance radius
-                float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(unitGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
+                float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(fromGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
                 if (distance > maxShootDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
 
                 if (!LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; }
@@ -171,5 +176,22 @@ public class ShootAction : BaseAction
             total += UnityEngine.Random.Range(1, sides + 1); // Random.Range is inclusive for min, exclusive for max
         }
         return total;
+    }
+
+    public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
+    {
+        int _actionValue = 100;
+
+        return new EnemyAIAction
+        {
+            gridPosition = gridPosition,
+            actionValue = _actionValue
+        };
+    }
+
+    public int GetTargetCountAtGridPosition(GridPosition gridPosition)
+    {
+        if (!IsValidActionGridPosition(gridPosition)) { return 0; }
+        return GetValidActionGridPositionList(gridPosition).Count;
     }
 }
