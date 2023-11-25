@@ -21,7 +21,7 @@ public class DodgeAction : BaseAction
     {
         if (IsActive)
         {
-            Dodge();
+            Spin();
         }
     }
 
@@ -31,7 +31,6 @@ public class DodgeAction : BaseAction
         {
             unit.AddCondition(UnitCondition.Dodging);
         }
-        Spin();
     }
 
     public void Spin()
@@ -46,7 +45,6 @@ public class DodgeAction : BaseAction
             totalSpinAmount = 0f;
             transform.eulerAngles = startAngle; // corrects for small drift from angle update.
         }
-
     }
 
     public override bool CanTakeAction(GridPosition gridPosition)
@@ -56,6 +54,7 @@ public class DodgeAction : BaseAction
 
     public override void TakeAction(GridPosition gridPosition, Action callback)
     {
+        Dodge();
         ActionStart(callback);
         startAngle = transform.eulerAngles;
     }
@@ -70,7 +69,7 @@ public class DodgeAction : BaseAction
         return new List<GridPosition> { unit.GetGridPosition() };
     }
 
-    public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
+    public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
         int _actionValue = 90;
         if (unit.HasCondition(UnitCondition.Dodging))

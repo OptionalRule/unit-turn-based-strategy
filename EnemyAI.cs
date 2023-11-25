@@ -20,6 +20,7 @@ public class EnemyAI : MonoBehaviour
     private State currentState;
     private Unit activeUnit;
     private BaseAction selectedAction;
+    private EnemyAIAction selectedEnemyAIAction;
     private Queue<Unit> enemyUnits;
 
     private float timer;
@@ -146,6 +147,7 @@ public class EnemyAI : MonoBehaviour
         if (bestBaseAction != null && activeUnit.CanSpendActionPointsToTakeAction(bestBaseAction))
         {
             selectedAction = bestBaseAction;
+            selectedEnemyAIAction = bestEnemyAIAction;
             timer = 1f;
             currentState = State.TakingUnitAction;
         } else
@@ -163,7 +165,7 @@ public class EnemyAI : MonoBehaviour
             currentState = State.SelectingAction;
             return;
         }
-        GridPosition gridPosition = GetRandomPlayerGridPosition();
+        GridPosition gridPosition = selectedEnemyAIAction.gridPosition;
         if (activeUnit.CanSpendActionPointsToTakeAction(selectedAction) && 
             selectedAction.CanTakeAction(gridPosition))
         {
@@ -182,8 +184,9 @@ public class EnemyAI : MonoBehaviour
         return randomPlayerUnit.GetGridPosition();
     }
 
-    private void ChangeActiveUnit(Unit unit) { 
+    private void ChangeActiveUnit(Unit unit) {
         activeUnit = unit;
+        selectedAction = null;
         currentState = State.SelectingAction;
         Debug.Log("Active unit changed to " + activeUnit.name); 
     }
@@ -191,6 +194,8 @@ public class EnemyAI : MonoBehaviour
     private void ClearEnemyAI()
     {
         activeUnit = null;
+        selectedAction = null;
+        selectedEnemyAIAction = null;
         enemyUnits = null;
     }
 

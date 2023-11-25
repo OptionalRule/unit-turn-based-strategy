@@ -178,7 +178,7 @@ public class ShootAction : BaseAction
         return total;
     }
 
-    public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
+    public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
         int _actionValue = 100;
 

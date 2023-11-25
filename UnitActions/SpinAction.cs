@@ -55,7 +55,7 @@ public class SpinAction : BaseAction
         return new List<GridPosition> { unit.GetGridPosition() };
     }
 
-    public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
+    public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
         int _actionValue = 0;
 

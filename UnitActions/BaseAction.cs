@@ -63,13 +63,16 @@ public abstract class BaseAction : MonoBehaviour
 
     public EnemyAIAction GetBestEnemyAIAction()
     {
+        /*
+         * This determines the action value for this action for each valid grid position.
+         * It returns the grid position with the highest action value.
+         * This will be used in another class to compare all best action values to determine the best action.
+         */
         List<EnemyAIAction> enemyAIActions = new List<EnemyAIAction>();
         List<GridPosition> validActionGridPositionList = GetValidActionGridPositionList();
         foreach (GridPosition gridPosition in validActionGridPositionList)
         {
-            EnemyAIAction enemyAIAction = GetEnemyAIAction(gridPosition);
-            //enemyAIAction.gridPosition = gridPosition;
-            //enemyAIAction.actionValue = GetActionValue(gridPosition);
+            EnemyAIAction enemyAIAction = GetEnemyAIActionValueForPosition(gridPosition);
             enemyAIActions.Add(enemyAIAction);
         }
 
@@ -78,9 +81,13 @@ public abstract class BaseAction : MonoBehaviour
             return null;
         }
 
-        enemyAIActions.Sort((EnemyAIAction a, EnemyAIAction b) => b.actionValue.CompareTo(a.actionValue));
+        enemyAIActions.Sort();
         return enemyAIActions[0];
     }
 
-    public abstract EnemyAIAction GetEnemyAIAction(GridPosition gridPosition);
+    public abstract EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition);
+    /*
+     * * This is the value of the action for the enemy AI for a specific grid position.
+     * * The higher the value, the more likely the enemy AI will take this action.
+     * */
 }
