@@ -6,7 +6,7 @@ using UnityEngine;
 public class EnemyAI : MonoBehaviour
 {
 
-    private enum State
+    public enum State
     {
         WaitingForEnemyTurn,
         StartingEnemyTurn,
@@ -19,7 +19,7 @@ public class EnemyAI : MonoBehaviour
 
     private State currentState;
     private Unit activeUnit;
-    private BaseAction selectedAction;
+    // private BaseAction selectedAction;
     private EnemyAIAction selectedEnemyAIAction;
     private Queue<Unit> enemyUnits;
 
@@ -93,7 +93,7 @@ public class EnemyAI : MonoBehaviour
 
     private void SelectActiveUnit()
     {
-        selectedAction = null;
+        ClearEnemyAI();
         if (activeUnit != null && activeUnit.GetActionPoints() > 0)
         {
             currentState = State.SelectingAction;
@@ -117,37 +117,19 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        EnemyAIAction bestEnemyAIAction = null;
-        BaseAction bestBaseAction = null;
-        foreach (BaseAction baseAction in activeUnit.GetBaseActions())
-        {
-            if(!activeUnit.CanSpendActionPointsToTakeAction(baseAction))
-            {
-                continue;
-            }
+        List<EnemyAIAction> bestEnemyAIActions = GetBestEnemyAIActionOptions(activeUnit);
 
-            if (bestEnemyAIAction == null)
-            {
-                bestEnemyAIAction = baseAction.GetBestEnemyAIAction();
-                bestBaseAction = baseAction;
-            } else
-            {
-                EnemyAIAction possibleEnemyAIAction = baseAction.GetBestEnemyAIAction();
-                if (possibleEnemyAIAction != null &&
-                    possibleEnemyAIAction.actionValue > bestEnemyAIAction.actionValue)
-                {
-                    bestEnemyAIAction = possibleEnemyAIAction;
-                    bestBaseAction = baseAction;
-                }
-            }
+        Debug.Log("Found " + bestEnemyAIActions.Count + " actions for " + activeUnit.name);
+        foreach(EnemyAIAction enemyAIAction in bestEnemyAIActions)
+        {
+            Debug.Log(enemyAIAction.action.name + " " + enemyAIAction.action.Label()  + " at " + enemyAIAction.gridPosition + " with value " + enemyAIAction.actionValue);
         }
 
-        Debug.Log($"Best action for {activeUnit.name} is {bestBaseAction} with value {bestEnemyAIAction.actionValue}");
-
-        if (bestBaseAction != null && activeUnit.CanSpendActionPointsToTakeAction(bestBaseAction))
+        if(bestEnemyAIActions.Count > 0)
         {
-            selectedAction = bestBaseAction;
-            selectedEnemyAIAction = bestEnemyAIAction;
+            bestEnemyAIActions.Sort((a, b) => b.actionValue.CompareTo(a.actionValue));
+            selectedEnemyAIAction = bestEnemyAIActions[0];
+            //selectedAction = selectedEnemyAIAction.baseAction;
             timer = 1f;
             currentState = State.TakingUnitAction;
         } else
@@ -157,20 +139,39 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    private List<EnemyAIAction> GetBestEnemyAIActionOptions(Unit actingUnit) { 
+        List<EnemyAIAction> bestEnemyAIActions = new List<EnemyAIAction>();
+           foreach (BaseAction baseAction in actingUnit.GetBaseActions())
+        {
+            if (!actingUnit.CanSpendActionPointsToTakeAction(baseAction))
+            {
+                continue;
+            }
+
+            EnemyAIAction possibleEnemyAIAction = baseAction.GetBestEnemyAIAction();
+            if (possibleEnemyAIAction != null)
+            {
+                possibleEnemyAIAction.action = baseAction;
+                bestEnemyAIActions.Add(possibleEnemyAIAction);
+            }
+        }
+        return bestEnemyAIActions;
+    }
+
     private void HandleSelectedAction()
     {
-        if (selectedAction == null)
+        if (selectedEnemyAIAction == null)
         {
             Debug.LogError("No action selected!");
             currentState = State.SelectingAction;
             return;
         }
-        GridPosition gridPosition = selectedEnemyAIAction.gridPosition;
-        if (activeUnit.CanSpendActionPointsToTakeAction(selectedAction) && 
-            selectedAction.CanTakeAction(gridPosition))
+
+        if (activeUnit.CanSpendActionPointsToTakeAction(selectedEnemyAIAction.action) && 
+            selectedEnemyAIAction.action.CanTakeAction(selectedEnemyAIAction.gridPosition))
         {
-            activeUnit.SpendActionPoints(selectedAction.GetActionPointCost());
-            selectedAction.TakeAction(gridPosition, () =>
+            activeUnit.SpendActionPoints(selectedEnemyAIAction.action.GetActionPointCost());
+            selectedEnemyAIAction.action.TakeAction(selectedEnemyAIAction.gridPosition, () =>
             {
                 currentState = State.SelectingAction;
             });
@@ -186,7 +187,7 @@ public class EnemyAI : MonoBehaviour
 
     private void ChangeActiveUnit(Unit unit) {
         activeUnit = unit;
-        selectedAction = null;
+        selectedEnemyAIAction = null;
         currentState = State.SelectingAction;
         Debug.Log("Active unit changed to " + activeUnit.name); 
     }
@@ -194,9 +195,7 @@ public class EnemyAI : MonoBehaviour
     private void ClearEnemyAI()
     {
         activeUnit = null;
-        selectedAction = null;
         selectedEnemyAIAction = null;
-        enemyUnits = null;
     }
 
     private void TurnSystem_OnTurnChanged(object sender, System.EventArgs e)
@@ -209,8 +208,16 @@ public class EnemyAI : MonoBehaviour
         else
         {
             ClearEnemyAI();
+            enemyUnits.Clear();
             currentState = State.WaitingForEnemyTurn;
         }
     }
 
+    public State CurrentState
+    {
+        get
+        {
+            return currentState;
+        }
+    }
 }

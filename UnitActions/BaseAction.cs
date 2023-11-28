@@ -61,7 +61,7 @@ public abstract class BaseAction : MonoBehaviour
         return actionColor;
     }
 
-    public EnemyAIAction GetBestEnemyAIAction()
+    public virtual EnemyAIAction GetBestEnemyAIAction()
     {
         /*
          * This determines the action value for this action for each valid grid position.

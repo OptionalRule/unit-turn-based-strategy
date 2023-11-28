@@ -58,6 +58,8 @@ public class LevelGrid : MonoBehaviour
 
     public bool IsValidGridPosition(GridPosition gridPosition) => gridSystem.IsValidGridPosition(gridPosition);
 
+    public float GetDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB) => gridSystem.GetDistanceBetween(gridPositionA, gridPositionB);
+
     public int GetWidth() => gridSystem.GetWidth();
 
     public int GetHeight() => gridSystem.GetHeight();

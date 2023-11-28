@@ -33,6 +33,11 @@ public class GridSystem
         return new Vector3(gridPosition.X, 0, gridPosition.Z) * cellSize;
     }
 
+    public float GetDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB)
+    {
+        return Vector3.Distance(GetWorldPosition(gridPositionA), GetWorldPosition(gridPositionB));
+    }
+
     public GridPosition GetGridPosition(Vector3 worldPosition)
     {
         return new GridPosition(

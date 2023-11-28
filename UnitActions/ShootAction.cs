@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Analytics;
+using OptionalRule.Utility;
 
 public class ShootAction : BaseAction
 {
@@ -118,21 +119,12 @@ public class ShootAction : BaseAction
     public List<GridPosition> GetValidActionGridPositionList(GridPosition fromGridPosition)
     {
         List<GridPosition> validGridPositions = new List<GridPosition>();
-        for (int x = -maxShootDistance; x <= maxShootDistance; x++)
+        foreach (Unit targetUnit in UnitManager.Instance.GetEnemyUnitsOf(unit))
         {
-            for (int z = -maxShootDistance; z <= maxShootDistance; z++)
+            GridPosition targetGridPosition = targetUnit.GetGridPosition();
+            if (targetGridPosition == null) { continue; }
+            if (LevelGrid.Instance.GetDistanceBetween(fromGridPosition, targetGridPosition) <= maxShootDistance)
             {
-                GridPosition offsetGridPosition = new GridPosition(x, z);
-                GridPosition targetGridPosition = offsetGridPosition + fromGridPosition;
-                if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) { continue; }
-
-                // Check if the target is within the max shoot distance radius
-                float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(fromGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
-                if (distance > maxShootDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
-
-                if (!LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; }
-                Unit targetUnit = LevelGrid.Instance.GetUnitAtGridPosition(targetGridPosition);
-                if (!targetUnit.IsEnemyOf(unit)) { continue; }
                 validGridPositions.Add(targetGridPosition);
             }
         }
@@ -165,17 +157,8 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        targetUnit.ApplyDamage(RollDice(7, 10), transform.position);
-    }
-
-    private int RollDice(int numberOfDice, int sides)
-    {
-        int total = 0;
-        for (int i = 0; i < numberOfDice; i++)
-        {
-            total += UnityEngine.Random.Range(1, sides + 1); // Random.Range is inclusive for min, exclusive for max
-        }
-        return total;
+        int damage = GameDice.Instance.Roll(7, 10);
+        targetUnit.ApplyDamage(damage, transform.position);
     }
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
@@ -191,7 +174,6 @@ public class ShootAction : BaseAction
 
     public int GetTargetCountAtGridPosition(GridPosition gridPosition)
     {
-        if (!IsValidActionGridPosition(gridPosition)) { return 0; }
         return GetValidActionGridPositionList(gridPosition).Count;
     }
 }

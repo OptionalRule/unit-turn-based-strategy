@@ -113,13 +113,29 @@ public class MoveAction : BaseAction
         return "Move";
     }
 
+    public override EnemyAIAction GetBestEnemyAIAction()
+    {
+        EnemyAIAction bestEnemyAIAction = base.GetBestEnemyAIAction();
+        if (bestEnemyAIAction.actionValue <= 0)
+        {
+            Unit closestPlayerUnit = FindNearestPlayer();
+            GridPosition closestPlayerGridPosition = FindClosestValidPositionToUnit(closestPlayerUnit);
+            bestEnemyAIAction = new EnemyAIAction
+            {
+                gridPosition = closestPlayerGridPosition,
+                actionValue = 100
+            };
+        }
+        return bestEnemyAIAction;
+    }
+
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
         int _actionValue = 0;
         int targetCountAtPosition = unit.GetShootAction().GetTargetCountAtGridPosition(gridPosition);
         if (targetCountAtPosition > 0)
         {
-            _actionValue = Mathf.Clamp(110 - (10 * targetCountAtPosition), 0, 100);
+            _actionValue = Mathf.Clamp(100 - (6 * targetCountAtPosition), 0, 100);
         }
 
         return new EnemyAIAction
@@ -128,4 +144,49 @@ public class MoveAction : BaseAction
             actionValue = _actionValue
         };
     }
+
+    public GridPosition FindClosestValidPositionToUnit(Unit targetUnit)
+    {
+        Vector3 targetUnitPosition = targetUnit.transform.position;
+
+        // 2. Find valid grid positions
+        List<GridPosition> validPositions = GetValidActionGridPositionList();
+        GridPosition closestPosition = unit.GetGridPosition();
+        float closestDistance = Mathf.Infinity;
+
+        // 3. Calculate the closest position
+        foreach (GridPosition position in validPositions)
+        {
+            Vector3 gridWorldPosition = LevelGrid.Instance.GridPositionToWorldPosition(position);
+            float distance = Vector3.Distance(targetUnitPosition, gridWorldPosition);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestPosition = position;
+            }
+        }
+
+        return closestPosition;
+    }
+
+    private Unit FindNearestPlayer()
+    {
+        // Assuming you have a way to get all enemy units in the game
+        List<Unit> playerUnits = UnitManager.Instance.GetPlayerUnits();
+        Unit nearestPlayer = null;
+        float nearestDistance = Mathf.Infinity;
+
+        foreach (Unit playerUnit in playerUnits)
+        {
+            float distance = Vector3.Distance(this.transform.position, playerUnit.transform.position);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestPlayer = playerUnit;
+            }
+        }
+
+        return nearestPlayer;
+    }
+
 }

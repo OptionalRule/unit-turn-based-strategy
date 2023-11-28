@@ -93,4 +93,16 @@ public class UnitManager : MonoBehaviour
     {
         return unitList;
     }
+
+    public List<Unit> GetEnemyUnitsOf(Unit unit)
+    {
+        if (unit.IsEnemy())
+        {
+            return playerUnitList;
+        }
+        else
+        {
+            return enemyUnitList;
+        }
+    }
 }

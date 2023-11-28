@@ -7,6 +7,7 @@ public class EnemyAIAction : IComparable<EnemyAIAction>
 {
     public GridPosition gridPosition;
     public int actionValue;
+    public BaseAction action;
 
     public int CompareTo(EnemyAIAction other)
     {
