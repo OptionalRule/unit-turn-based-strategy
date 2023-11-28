@@ -44,6 +44,14 @@ public class UnitAnimator : MonoBehaviour
         {
             Debug.LogError("UnitAnimator is unable to get the healthsystem component!");
         }
+        if (TryGetComponent<DodgeAction>(out DodgeAction dodgeAction))
+        {
+            dodgeAction.OnDodgeActionStart += DodgeAction_OnDodgeActionStart;
+        }
+        else
+        {
+            Debug.LogError("UnitAnimator is unable to get the dodgeaction component!");
+        }
     }
 
     private void OnDestroy()
@@ -89,5 +97,10 @@ public class UnitAnimator : MonoBehaviour
     private void HealthSystem_OnRecieveDamage(object sender, EventArgs e)
     {
         animator.SetTrigger("DoHitReaction");
+    }
+
+    private void DodgeAction_OnDodgeActionStart(object sender, EventArgs e)
+    {
+        animator.SetTrigger("DoDodge");
     }
 }

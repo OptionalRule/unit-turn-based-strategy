@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static ShootAction;
 
 /*
  * * This uses the code from the Spin action for now and serves as a stub for the Dodge action.
@@ -17,12 +18,11 @@ public class DodgeAction : BaseAction
     private float totalSpinAmount;
     private Vector3 startAngle;
 
+    public event EventHandler<EventArgs> OnDodgeActionStart;
+    //public event EventHandler<EventArgs> OnDodgeActionEnd;
+
     public void Update()
     {
-        if (IsActive)
-        {
-            Spin();
-        }
     }
 
     public void Dodge()
@@ -30,20 +30,6 @@ public class DodgeAction : BaseAction
         if (!unit.HasCondition(UnitCondition.Dodging))
         {
             unit.AddCondition(UnitCondition.Dodging);
-        }
-    }
-
-    public void Spin()
-    {
-        float spinAmount = SPIN_SPEED * Time.deltaTime;
-        totalSpinAmount += spinAmount;
-        transform.eulerAngles += new Vector3(0, spinAmount, 0);
-        if (totalSpinAmount >= 360)
-        {
-            ActionComplete();
-
-            totalSpinAmount = 0f;
-            transform.eulerAngles = startAngle; // corrects for small drift from angle update.
         }
     }
 
@@ -56,7 +42,7 @@ public class DodgeAction : BaseAction
     {
         Dodge();
         ActionStart(callback);
-        startAngle = transform.eulerAngles;
+        OnDodgeActionStart?.Invoke(this, EventArgs.Empty);
     }
 
     public override string Label()
@@ -71,7 +57,7 @@ public class DodgeAction : BaseAction
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
-        int _actionValue = 90;
+        int _actionValue = 95;
         if (unit.HasCondition(UnitCondition.Dodging))
         {
             _actionValue = 0;

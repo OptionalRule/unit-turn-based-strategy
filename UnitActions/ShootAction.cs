@@ -157,13 +157,13 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        int damage = GameDice.Instance.Roll(7, 10);
+        int damage = 1; // GameDice.Instance.Roll(7, 10);
         targetUnit.ApplyDamage(damage, transform.position);
     }
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
-        int _actionValue = 100;
+        int _actionValue = 90;
 
         return new EnemyAIAction
         {

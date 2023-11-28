@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public abstract class BaseAction : MonoBehaviour
@@ -68,6 +69,22 @@ public abstract class BaseAction : MonoBehaviour
          * It returns the grid position with the highest action value.
          * This will be used in another class to compare all best action values to determine the best action.
          */
+        List<EnemyAIAction> enemyAIActions = GetHighestActionValueList();
+
+        if (enemyAIActions.Count == 0)
+        {
+            return null;
+        }
+
+        enemyAIActions.Sort();
+        return enemyAIActions[0];
+    }
+
+    /*
+     * This gets a list of the EnemyAIActions that share the highest actionValue score.
+     *     */
+    public virtual List<EnemyAIAction> GetHighestActionValueList()
+    {
         List<EnemyAIAction> enemyAIActions = new List<EnemyAIAction>();
         List<GridPosition> validActionGridPositionList = GetValidActionGridPositionList();
         foreach (GridPosition gridPosition in validActionGridPositionList)
@@ -78,11 +95,17 @@ public abstract class BaseAction : MonoBehaviour
 
         if (enemyAIActions.Count == 0)
         {
-            return null;
+            return enemyAIActions;
         }
 
         enemyAIActions.Sort();
-        return enemyAIActions[0];
+        int highestValue = enemyAIActions.First().actionValue;
+
+        // Filter out all actions with this top actionValue
+        List<EnemyAIAction> topActions = enemyAIActions.Where(action => action.actionValue == highestValue).ToList();
+
+        // Now topActions contains all EnemyAIAction objects with the highest actionValue
+        return topActions;
     }
 
     public abstract EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition);

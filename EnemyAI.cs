@@ -119,12 +119,6 @@ public class EnemyAI : MonoBehaviour
 
         List<EnemyAIAction> bestEnemyAIActions = GetBestEnemyAIActionOptions(activeUnit);
 
-        Debug.Log("Found " + bestEnemyAIActions.Count + " actions for " + activeUnit.name);
-        foreach(EnemyAIAction enemyAIAction in bestEnemyAIActions)
-        {
-            Debug.Log(enemyAIAction.action.name + " " + enemyAIAction.action.Label()  + " at " + enemyAIAction.gridPosition + " with value " + enemyAIAction.actionValue);
-        }
-
         if(bestEnemyAIActions.Count > 0)
         {
             bestEnemyAIActions.Sort((a, b) => b.actionValue.CompareTo(a.actionValue));

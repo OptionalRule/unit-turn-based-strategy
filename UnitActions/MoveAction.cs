@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
@@ -44,7 +42,7 @@ public class MoveAction : BaseAction
             StopMoving();
             ActionComplete();
         }
-        UpdateGridPosition();
+        UpdateUnitGridPosition();
     }
 
     public override bool CanTakeAction(GridPosition gridPosition)
@@ -74,6 +72,9 @@ public class MoveAction : BaseAction
         OnMoveActionStop?.Invoke(this, EventArgs.Empty);
     }
 
+    /* 
+     * Returns all of the grid positions within range that do not have a unit on them.
+     */
     public override List<GridPosition> GetValidActionGridPositionList()
     {
         List<GridPosition> validGridPositions = new List<GridPosition>();
@@ -97,7 +98,10 @@ public class MoveAction : BaseAction
         return validGridPositions;
     }
 
-    public void UpdateGridPosition()
+    /* 
+     ** Update the units position on the level grid if it has changed.
+     **/
+    public void UpdateUnitGridPosition()
     {
         GridPosition newGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
         if (unit.GetGridPosition() != newGridPosition)
@@ -116,7 +120,14 @@ public class MoveAction : BaseAction
     public override EnemyAIAction GetBestEnemyAIAction()
     {
         EnemyAIAction bestEnemyAIAction = base.GetBestEnemyAIAction();
-        if (bestEnemyAIAction.actionValue <= 0)
+        EnemyAIAction currentPositionActionValue = GetEnemyAIActionValueForPosition(unit.GetGridPosition());
+        if (currentPositionActionValue.actionValue > 0)
+        {
+            bestEnemyAIAction = currentPositionActionValue;
+            bestEnemyAIAction.actionValue = 1;
+        }
+
+        if (bestEnemyAIAction.actionValue == 0)
         {
             Unit closestPlayerUnit = FindNearestPlayer();
             GridPosition closestPlayerGridPosition = FindClosestValidPositionToUnit(closestPlayerUnit);
@@ -135,7 +146,7 @@ public class MoveAction : BaseAction
         int targetCountAtPosition = unit.GetShootAction().GetTargetCountAtGridPosition(gridPosition);
         if (targetCountAtPosition > 0)
         {
-            _actionValue = Mathf.Clamp(100 - (6 * targetCountAtPosition), 0, 100);
+            _actionValue = Mathf.Clamp(100 - (10 * targetCountAtPosition), 0, 100);
         }
 
         return new EnemyAIAction
@@ -149,25 +160,25 @@ public class MoveAction : BaseAction
     {
         Vector3 targetUnitPosition = targetUnit.transform.position;
 
-        // 2. Find valid grid positions
         List<GridPosition> validPositions = GetValidActionGridPositionList();
         GridPosition closestPosition = unit.GetGridPosition();
         float closestDistance = Mathf.Infinity;
 
-        // 3. Calculate the closest position
-        foreach (GridPosition position in validPositions)
+        foreach (GridPosition gridPosition in validPositions)
         {
-            Vector3 gridWorldPosition = LevelGrid.Instance.GridPositionToWorldPosition(position);
-            float distance = Vector3.Distance(targetUnitPosition, gridWorldPosition);
-            if (distance < closestDistance)
+            Vector3 gridWorldPosition = LevelGrid.Instance.GridPositionToWorldPosition(gridPosition);
+            float distanceToTargetUnit = Vector3.Distance(targetUnitPosition, gridWorldPosition);
+
+            if (distanceToTargetUnit < closestDistance)
             {
-                closestDistance = distance;
-                closestPosition = position;
+                closestDistance = distanceToTargetUnit;
+                closestPosition = gridPosition;
             }
         }
 
         return closestPosition;
     }
+
 
     private Unit FindNearestPlayer()
     {
