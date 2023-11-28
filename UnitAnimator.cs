@@ -12,6 +12,7 @@ public class UnitAnimator : MonoBehaviour
     MoveAction moveAction;
     ShootAction shootAction;
     HealthSystem healthSystem;
+    DodgeAction dodgeAction;
 
     private void OnValidate()
     {
@@ -44,7 +45,7 @@ public class UnitAnimator : MonoBehaviour
         {
             Debug.LogError("UnitAnimator is unable to get the healthsystem component!");
         }
-        if (TryGetComponent<DodgeAction>(out DodgeAction dodgeAction))
+        if (TryGetComponent<DodgeAction>(out dodgeAction))
         {
             dodgeAction.OnDodgeActionStart += DodgeAction_OnDodgeActionStart;
         }
@@ -68,6 +69,10 @@ public class UnitAnimator : MonoBehaviour
         if(healthSystem != null)
         {
             healthSystem.OnRecieveDamage -= HealthSystem_OnRecieveDamage;
+        }
+        if(dodgeAction != null)
+        {
+            dodgeAction.OnDodgeActionStart -= DodgeAction_OnDodgeActionStart;
         }
     }
 

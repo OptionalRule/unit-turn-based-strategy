@@ -12,12 +12,6 @@ using static ShootAction;
 
 public class DodgeAction : BaseAction
 {
-    private const float SPIN_SPEED = 360f;
-
-    // Some stopping variables.
-    private float totalSpinAmount;
-    private Vector3 startAngle;
-
     public event EventHandler<EventArgs> OnDodgeActionStart;
     //public event EventHandler<EventArgs> OnDodgeActionEnd;
 
@@ -43,6 +37,7 @@ public class DodgeAction : BaseAction
         Dodge();
         ActionStart(callback);
         OnDodgeActionStart?.Invoke(this, EventArgs.Empty);
+        ActionComplete();
     }
 
     public override string Label()
