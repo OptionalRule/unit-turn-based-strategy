@@ -19,7 +19,6 @@ public class EnemyAI : MonoBehaviour
 
     private State currentState;
     private Unit activeUnit;
-    // private BaseAction selectedAction;
     private EnemyAIAction selectedEnemyAIAction;
     private Queue<Unit> enemyUnits;
 
@@ -123,7 +122,6 @@ public class EnemyAI : MonoBehaviour
         {
             bestEnemyAIActions.Sort((a, b) => b.actionValue.CompareTo(a.actionValue));
             selectedEnemyAIAction = bestEnemyAIActions[0];
-            //selectedAction = selectedEnemyAIAction.baseAction;
             timer = 1f;
             currentState = State.TakingUnitAction;
         } else

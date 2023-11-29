@@ -1,29 +1,31 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GridSystem
+public class GridSystem<TGridObject>
 {
     private int width;
     private int height;
     private float cellSize;
 
-    private GridSquare[,] gridSquareArray;
+    private TGridObject[,] gridObjectArray;
 
-    public GridSystem(int width, int height, float cellSize)
+    public GridSystem(int width, int height, float cellSize,
+        Func<GridSystem<TGridObject>, GridPosition, TGridObject> gridObjectConstructor)
     {
         this.width = width;
         this.height = height;
         this.cellSize = cellSize;
 
-        this.gridSquareArray = new GridSquare[width, height];
+        this.gridObjectArray = new TGridObject[width, height];
 
 
         for (int x = 0; x < width; x++)
         {
             for (int z = 0; z < height; z++)
             {
-                gridSquareArray[x, z] = new GridSquare(this, new GridPosition(x, z));
+                gridObjectArray[x, z] = gridObjectConstructor(this, new GridPosition(x, z));
             }
         }
     }
@@ -46,9 +48,9 @@ public class GridSystem
             );
     }
 
-    public GridSquare GetGridSquare(GridPosition gridPosition)
+    public TGridObject GetGridObject(GridPosition gridPosition)
     {
-        return gridSquareArray[gridPosition.X, gridPosition.Z];
+        return gridObjectArray[gridPosition.X, gridPosition.Z];
     }
 
     public void CreateDebugObjects(Transform debugPrefab, Transform parent)
@@ -60,7 +62,7 @@ public class GridSystem
                 GridPosition gridPosition = new GridPosition(x, z);
                 Transform debugTransform = GameObject.Instantiate(debugPrefab, GetWorldPosition(gridPosition) + new Vector3(0f, 0.01f, 0), Quaternion.identity, parent);
                 GridDebugSquare gridDebugSquare = debugTransform.GetComponent<GridDebugSquare>();
-                gridDebugSquare.SetGridSquare(GetGridSquare(gridPosition));
+                gridDebugSquare.SetGridSquare(GetGridObject(gridPosition) as GridSquare);
             }
         }
     }

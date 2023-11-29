@@ -92,19 +92,16 @@ public class Unit : MonoBehaviour
         return transform.position;
     }
 
-    public MoveAction GetMoveAction()
+    public T GetAction<T>() where T : BaseAction
     {
-        return moveAction;
-    }
-
-    public DodgeAction GetDodgeAction()
-    {
-        return dodgeAction;
-    }
-
-    public ShootAction GetShootAction()
-    {
-        return shootAction;
+        foreach (BaseAction baseAction in GetBaseActions())
+        {
+            if (baseAction is T)
+            {
+                return (T)baseAction;
+            }
+        }
+        return null;
     }
 
     public BaseAction[] GetBaseActions()

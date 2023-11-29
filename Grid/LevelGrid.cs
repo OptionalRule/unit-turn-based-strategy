@@ -11,7 +11,7 @@ public class LevelGrid : MonoBehaviour
     [SerializeField] private int gridHeight = 10;
     [SerializeField] private float gridCellSize = 2f;
 
-    private GridSystem gridSystem;
+    private GridSystem<GridSquare> gridSystem;
     private void OnValidate()
     {
         if(gridDebugObjectPrefab == null)
@@ -35,19 +35,20 @@ public class LevelGrid : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        Instance.gridSystem = new GridSystem(gridWidth, gridHeight, gridCellSize);
+        Instance.gridSystem = new GridSystem<GridSquare>(gridWidth, gridHeight, gridCellSize, 
+            (GridSystem<GridSquare> g, GridPosition gridPosition) => new GridSquare(g, gridPosition));
         Instance.gridSystem.CreateDebugObjects(gridDebugObjectPrefab, this.transform);
     }
 
     public void AddUnitToGrid(GridPosition gridPosition, Unit unit)
     {
-        GridSquare gridSquare = Instance.gridSystem.GetGridSquare(gridPosition);
+        GridSquare gridSquare = Instance.gridSystem.GetGridObject(gridPosition);
         gridSquare.AddUnit(unit);
     }
 
     public void RemoveUnitFromGrid(GridPosition gridPosition, Unit unit)
     {
-        GridSquare gridSquare = Instance.gridSystem.GetGridSquare(gridPosition);
+        GridSquare gridSquare = Instance.gridSystem.GetGridObject(gridPosition);
         gridSquare.RemoveUnit(unit);
     }
 
@@ -66,7 +67,7 @@ public class LevelGrid : MonoBehaviour
 
     public bool HasAnyUnitOnGridPosition(GridPosition gridPosition)
     {
-        GridSquare gridSquare = gridSystem.GetGridSquare(gridPosition);
+        GridSquare gridSquare = gridSystem.GetGridObject(gridPosition);
         if (gridSquare != null)
         {
             return gridSquare.HasAnyUnit();
@@ -76,7 +77,7 @@ public class LevelGrid : MonoBehaviour
 
     public Unit GetUnitAtGridPosition(GridPosition gridPosition)
     {
-        GridSquare gridSquare = gridSystem.GetGridSquare(gridPosition);
+        GridSquare gridSquare = gridSystem.GetGridObject(gridPosition);
         return gridSquare.GetUnit();
     }
 }
