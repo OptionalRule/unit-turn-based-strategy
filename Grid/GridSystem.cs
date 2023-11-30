@@ -67,12 +67,46 @@ public class GridSystem<TGridObject>
         }
     }
 
+    public List<GridPosition> GetNeighbours(GridPosition gridPosition)
+    {
+        List<GridPosition> neighbourList = new List<GridPosition>();
+
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                if (x == 0 && z == 0)
+                {
+                    // Skip the current cell
+                    continue;
+                }
+
+                GridPosition checkPos = new GridPosition(gridPosition.X + x, gridPosition.Z + z);
+                if (IsValidGridPosition(checkPos))
+                {
+                    neighbourList.Add(checkPos);
+                }
+            }
+        }
+
+        return neighbourList;
+    }
+
+
     public bool IsValidGridPosition(GridPosition gridPosition)
     {
         return gridPosition.X >= 0 &&
                gridPosition.Z >= 0 &&
                gridPosition.X < width &&
                gridPosition.Z < height;
+    }
+
+    public bool IsValidGridPosition(int x, int z)
+    {
+        return x >= 0 &&
+               z >= 0 &&
+               x < width &&
+               z < height;
     }
 
     public int GetWidth()
