@@ -62,7 +62,7 @@ public class GridSystem<TGridObject>
                 GridPosition gridPosition = new GridPosition(x, z);
                 Transform debugTransform = GameObject.Instantiate(debugPrefab, GetWorldPosition(gridPosition) + new Vector3(0f, 0.01f, 0), Quaternion.identity, parent);
                 GridDebugSquare gridDebugSquare = debugTransform.GetComponent<GridDebugSquare>();
-                gridDebugSquare.SetGridSquare(GetGridObject(gridPosition) as GridSquare);
+                gridDebugSquare.SetGridSquare(GetGridObject(gridPosition));
             }
         }
     }
@@ -83,5 +83,10 @@ public class GridSystem<TGridObject>
     public int GetHeight()
     {
         return height;
+    }
+
+    public float GetCellSize()
+    {
+        return cellSize;
     }
 }

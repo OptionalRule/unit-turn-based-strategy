@@ -37,7 +37,7 @@ public class LevelGrid : MonoBehaviour
         }
         Instance.gridSystem = new GridSystem<GridSquare>(gridWidth, gridHeight, gridCellSize, 
             (GridSystem<GridSquare> g, GridPosition gridPosition) => new GridSquare(g, gridPosition));
-        Instance.gridSystem.CreateDebugObjects(gridDebugObjectPrefab, this.transform);
+        
     }
 
     public void AddUnitToGrid(GridPosition gridPosition, Unit unit)
@@ -64,6 +64,7 @@ public class LevelGrid : MonoBehaviour
     public int GetWidth() => gridSystem.GetWidth();
 
     public int GetHeight() => gridSystem.GetHeight();
+    public float GetCellSize() => gridSystem.GetCellSize(); 
 
     public bool HasAnyUnitOnGridPosition(GridPosition gridPosition)
     {
