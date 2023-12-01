@@ -2,6 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/* 
+ * * Setup the Pathfinding after LevelGrid in Script Execution Order.
+ * */
+
 public class Pathfinding : MonoBehaviour
 {
     private const int MOVE_STRAIGHT_COST = 10;
@@ -10,6 +14,7 @@ public class Pathfinding : MonoBehaviour
     public static Pathfinding Instance { get; private set; }
     
     [SerializeField] private Transform gridDebugObjectPrefab;
+    [SerializeField] private LayerMask obstacleLayerMask;
     
     private int width;
     private int height;
@@ -37,6 +42,38 @@ public class Pathfinding : MonoBehaviour
         gridSystem = new GridSystem<PathNode>(width, height, cellSize,
                        (GridSystem<PathNode> gameObject, GridPosition gridPosition) => new PathNode(gridPosition));
         gridSystem.CreateDebugObjects(gridDebugObjectPrefab, this.transform);
+        SetNonWalkableGridPositions();
+    }
+
+    public void SetNonWalkableGridPositions()
+    {
+        for (int x = 0; x < gridSystem.GetWidth(); x++)
+        {
+            for (int z = 0; z < gridSystem.GetHeight(); z++)
+            {
+                bool isBlocked = DetectObstacle(new GridPosition(x, z));
+                GetNode(x, z).IsWalkable = !isBlocked;
+            }
+        }
+    }
+
+    public bool DetectObstacle(GridPosition gridPosition)
+    {
+        float halfCellSize = cellSize / 2f;
+        for(float x = -halfCellSize; x <= halfCellSize; x += halfCellSize)
+        {
+            for(float z = -halfCellSize; z <= halfCellSize; z += halfCellSize)
+            {
+                float raycastOffset = 5f;
+                Vector3 offset = new Vector3(x, 0, z) + Vector3.down * raycastOffset;
+                Vector3 worldPosition = gridSystem.GetWorldPosition(gridPosition) + offset;
+                if(Physics.Raycast(worldPosition, Vector3.up, out RaycastHit hit, raycastOffset * 3f, obstacleLayerMask))
+                {
+                    return true;
+                };
+            }
+        }
+        return false;
     }
 
     public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition)

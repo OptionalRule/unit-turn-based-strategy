@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/* 
+ * Setup the TurnSystem after UnitManager in Script Execution Order.
+ */
+
 public class TurnSystem : MonoBehaviour
 {
 

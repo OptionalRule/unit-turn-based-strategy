@@ -4,6 +4,11 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
+/* 
+ * Setup the UnitActionSystem as the first local script in Script Execution Order.
+ */
+
+
 public class UnitActionSystem : MonoBehaviour
 {
     public static UnitActionSystem Instance { get; private set; }

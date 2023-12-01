@@ -2,6 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/* 
+ * Setup the UnitManager after UnitActionSystem in Script Execution Order.
+ */
+
 public class UnitManager : MonoBehaviour
 {
     private static UnitManager _instance;

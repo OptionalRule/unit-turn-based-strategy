@@ -1,6 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+
+/* 
+ * Setup the LevelGrid after TurnSystem in Script Execution Order.
+ */
 
 public class LevelGrid : MonoBehaviour
 {
@@ -86,4 +91,27 @@ public class LevelGrid : MonoBehaviour
         GridSquare gridSquare = gridSystem.GetGridObject(gridPosition);
         return gridSquare.GetUnit();
     }
+
+    private void OnDrawGizmos()
+    {
+        // Draw the outer perimeter of the grid
+        Gizmos.color = Color.white;
+
+        // Draw the four sides of the rectangle representing the outer grid
+        Vector3 bottomLeft = GetWorldPosition(0, 0);
+        Vector3 bottomRight = GetWorldPosition(gridWidth, 0);
+        Vector3 topLeft = GetWorldPosition(0, gridHeight);
+        Vector3 topRight = GetWorldPosition(gridWidth, gridHeight);
+
+        Gizmos.DrawLine(bottomLeft, bottomRight);
+        Gizmos.DrawLine(bottomRight, topRight);
+        Gizmos.DrawLine(topRight, topLeft);
+        Gizmos.DrawLine(topLeft, bottomLeft);
+    }
+
+    public Vector3 GetWorldPosition(int x, int z)
+    {
+        return new Vector3(x, 0, z) * gridCellSize;
+    }
+
 }
