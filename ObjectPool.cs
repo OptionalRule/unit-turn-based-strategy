@@ -1,42 +1,42 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class ObjectPool : MonoBehaviour
+public class ObjectPool<T> : MonoBehaviour where T : Component
 {
-    public GameObject objectPrefab;
-    private Queue<GameObject> pool = new Queue<GameObject>();
+    public T prefab;
+    private Queue<T> pool = new Queue<T>();
 
-    public void Initialize(GameObject prefab, int initialCount)
+    public void Initialize(T prefab, int initialCount)
     {
-        objectPrefab = prefab;
+        this.prefab = prefab;
         for (int i = 0; i < initialCount; i++)
         {
             AddObjectToPool();
         }
     }
 
-    public GameObject GetObject()
+    public T GetObject()
     {
         if (pool.Count == 0)
         {
             AddObjectToPool();
         }
 
-        var obj = pool.Dequeue();
-        obj.SetActive(true);
+        T obj = pool.Dequeue();
+        obj.gameObject.SetActive(true);
         return obj;
     }
 
-    public void ReturnObject(GameObject obj)
+    public void ReturnObject(T obj)
     {
-        obj.SetActive(false);
+        obj.gameObject.SetActive(false);
         pool.Enqueue(obj);
     }
 
     private void AddObjectToPool()
     {
-        var newObject = Instantiate(objectPrefab);
-        newObject.SetActive(false);
+        T newObject = Instantiate(prefab);
+        newObject.gameObject.SetActive(false);
         pool.Enqueue(newObject);
     }
 }

@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
+    public static float UNIT_SHOULDER_HEIGHT = 1.7f;
+    
     private GridPosition unitGridPosition;
     private MoveAction moveAction;
     private DodgeAction dodgeAction;

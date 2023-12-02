@@ -59,24 +59,23 @@ public class Pathfinding : MonoBehaviour
 
     public bool DetectObstacle(GridPosition gridPosition)
     {
-        float halfCellSize = cellSize / 2f;
-        for(float x = -halfCellSize; x <= halfCellSize; x += halfCellSize)
+        float halfCellSize = (cellSize / 2f) * 0.95f;
+        Vector3 boxSize = new Vector3(halfCellSize, halfCellSize, halfCellSize); // Define the box size
+
+        float boxcastOffset = 5f;
+        Vector3 offset = Vector3.down * boxcastOffset;
+        Vector3 worldPosition = gridSystem.GetWorldPosition(gridPosition) + offset;
+
+        if (Physics.BoxCast(worldPosition, boxSize / 2, Vector3.up, out RaycastHit hit, Quaternion.identity, boxcastOffset * 3f, obstacleLayerMask))
         {
-            for(float z = -halfCellSize; z <= halfCellSize; z += halfCellSize)
-            {
-                float raycastOffset = 5f;
-                Vector3 offset = new Vector3(x, 0, z) + Vector3.down * raycastOffset;
-                Vector3 worldPosition = gridSystem.GetWorldPosition(gridPosition) + offset;
-                if(Physics.Raycast(worldPosition, Vector3.up, out RaycastHit hit, raycastOffset * 3f, obstacleLayerMask))
-                {
-                    return true;
-                };
-            }
+            return true;
         }
+
         return false;
     }
 
-    public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition)
+
+    public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition, out int pathLength)
     {
         List<PathNode> openSet = new List<PathNode>();
         List<PathNode> closedSet = new List<PathNode>();
@@ -107,6 +106,7 @@ public class Pathfinding : MonoBehaviour
 
             if (currentNode == targetPathNode)
             {
+                pathLength = targetPathNode.GetFCost();
                 return CalculatePath(targetPathNode);
             }
 
@@ -141,6 +141,7 @@ public class Pathfinding : MonoBehaviour
 
         // Out of nodes on the openList
         Debug.Log("Path not found");
+        pathLength = 0;
         return null;
     }
 
@@ -215,5 +216,16 @@ public class Pathfinding : MonoBehaviour
         if (dstX > dstZ)
             return MOVE_DIAGONAL_COST * dstZ + MOVE_STRAIGHT_COST * (dstX - dstZ);
         return MOVE_DIAGONAL_COST * dstX + MOVE_STRAIGHT_COST * (dstZ - dstX);
+    }
+
+    public bool IsWalkable(GridPosition gridPosition)
+    {
+        return gridSystem.GetGridObject(gridPosition).IsWalkable;
+    }
+
+    public int GetPathLength(GridPosition startGridPosition, GridPosition targetGridPosition)
+    {
+        FindPath(startGridPosition, targetGridPosition, out int pathLength);
+        return pathLength;
     }
 }

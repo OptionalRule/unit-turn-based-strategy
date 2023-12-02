@@ -10,6 +10,7 @@ public class UnitSpawner : MonoBehaviour
     [SerializeField] private int maxSpawnDistance = 1;
     [SerializeField] private bool spawnOnStart = true;
     [SerializeField] private string unitBaseName = "Unit";
+    [SerializeField] private bool spawnRandomAmount = false;
 
     private void OnValidate()
     {
@@ -33,7 +34,9 @@ public class UnitSpawner : MonoBehaviour
     {
         GridPosition spawnerGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(transform.position);
 
-        for (int i = 0; i < spawnNumber; i++)
+        int actualSpawnNumber = spawnRandomAmount ? Random.Range(1, spawnNumber) : spawnNumber;
+
+        for (int i = 0; i < actualSpawnNumber; i++)
         {
             List<GridPosition> validGridPositions = GetValidGridPositions(spawnerGridPosition, maxSpawnDistance);
 
@@ -70,6 +73,7 @@ public class UnitSpawner : MonoBehaviour
                 GridPosition targetGridPosition = offsetGridPosition + gridPosition;
                 if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) { continue; }
                 if (LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; }
+                if (Pathfinding.Instance.DetectObstacle(targetGridPosition)) { continue; }
                 validGridPositions.Add(targetGridPosition);
             }
         }
@@ -86,12 +90,5 @@ public class UnitSpawner : MonoBehaviour
         Vector3 forward = transform.forward * 1.0f; // Length of the arrow
         Gizmos.color = Color.green; // Set a different color for the arrow for visibility
         Gizmos.DrawRay(transform.position, forward); // Draw the arrow as a line
-
-        // Optionally, you can also draw a small triangle at the end of the arrow for a more arrow-like appearance
-        // Adjust the size and angle of the triangle to your preference
-        //Vector3 right = Quaternion.LookRotation(forward) * Quaternion.Euler(0, 180 + 30, 0) * new Vector3(0, 0, 1);
-        //Vector3 left = Quaternion.LookRotation(forward) * Quaternion.Euler(0, 180 - 30, 0) * new Vector3(0, 0, 1);
-        //Gizmos.DrawRay(transform.position + forward, right * 0.25f);
-        //Gizmos.DrawRay(transform.position + forward, left * 0.25f);
     }
 }

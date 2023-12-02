@@ -15,6 +15,7 @@ public class LevelGrid : MonoBehaviour
     [SerializeField] private int gridWidth = 10;
     [SerializeField] private int gridHeight = 10;
     [SerializeField] private float gridCellSize = 2f;
+    public LayerMask ObstacleLayerMask;
 
     private GridSystem<GridSquare> gridSystem;
     private void OnValidate()

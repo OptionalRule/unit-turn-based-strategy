@@ -123,6 +123,22 @@ public class ShootAction : BaseAction
         {
             GridPosition targetGridPosition = targetUnit.GetGridPosition();
             if (targetGridPosition == null) { continue; }
+
+            Vector3 fromPosition = LevelGrid.Instance.GridPositionToWorldPosition(fromGridPosition);
+            Vector3 targetPosition = LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition);
+            Vector3 shootDir = (LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition) -
+                LevelGrid.Instance.GridPositionToWorldPosition(fromGridPosition)).normalized;
+            float unitShoulderHeight = Unit.UNIT_SHOULDER_HEIGHT;
+            // Check if there is an obstacle between the unit and the target.
+            if (Physics.Raycast(fromPosition + Vector3.up * unitShoulderHeight,
+                               shootDir,
+                               Vector3.Distance(fromPosition, targetPosition),
+                               LevelGrid.Instance.ObstacleLayerMask
+                               ))
+            {
+                continue;
+            }
+
             if (LevelGrid.Instance.GetDistanceBetween(fromGridPosition, targetGridPosition) <= maxShootDistance)
             {
                 validGridPositions.Add(targetGridPosition);

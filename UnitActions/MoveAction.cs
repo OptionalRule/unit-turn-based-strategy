@@ -5,6 +5,9 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class MoveAction : BaseAction
 {
+
+    private Queue<GridPosition> pathQueue = new Queue<GridPosition>();
+
     private Vector3 targetMovePosition;
 
     private int maxMoveDistance = 7;
@@ -22,27 +25,47 @@ public class MoveAction : BaseAction
         actionColor = Color.green;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (IsActive)
         {
-            Move();
+            if (pathQueue.Count > 0)
+            {
+                Move();
+            }
+            else
+            {
+                StopMoving();
+                ActionComplete();
+            }
         }
     }
-
     private void Move()
     {
-        Vector3 moveDirection = (targetMovePosition - transform.position).normalized;
-        transform.position += moveDirection * Time.deltaTime * this.moveSpeed;
-        transform.forward = Vector3.Lerp(transform.forward, moveDirection, Time.deltaTime * rotateSpeed);
-        float distancToMoveTarget = Vector3.Distance(transform.position, targetMovePosition);
-        if (distancToMoveTarget <= stopDistance)
+        if (pathQueue.Count == 0)
         {
             StopMoving();
             ActionComplete();
+            return;
         }
-        UpdateUnitGridPosition();
+
+        targetMovePosition = LevelGrid.Instance.GridPositionToWorldPosition(pathQueue.Peek());
+        Vector3 moveDirection = (targetMovePosition - transform.position).normalized;
+        transform.position += moveDirection * Time.deltaTime * this.moveSpeed;
+        transform.forward = Vector3.Lerp(transform.forward, moveDirection, Time.deltaTime * rotateSpeed);
+        float distanceToMoveTarget = Vector3.Distance(transform.position, targetMovePosition);
+
+        if (distanceToMoveTarget <= stopDistance)
+        {
+            // Reached the current target position, move to the next
+            pathQueue.Dequeue();
+            UpdateUnitGridPosition();
+            if (pathQueue.Count == 0)
+            {
+                StopMoving();
+                ActionComplete();
+            }
+        }
     }
 
     public override bool CanTakeAction(GridPosition gridPosition)
@@ -58,8 +81,19 @@ public class MoveAction : BaseAction
             return;
         }
         ActionStart(callback);
-        targetMovePosition = LevelGrid.Instance.GridPositionToWorldPosition(gridPosition);
-        StartMoving();
+        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), gridPosition, out int pathLength);
+        if (path != null && path.Count > 0)
+        {
+            foreach (var position in path)
+            {
+                pathQueue.Enqueue(position);
+            }
+            StartMoving();
+        }
+        else
+        {
+            callback?.Invoke();
+        }
     }
 
     private void StartMoving()
@@ -92,6 +126,9 @@ public class MoveAction : BaseAction
 
                 if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) {  continue; }
                 if(LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; } 
+                if(!Pathfinding.Instance.IsWalkable(targetGridPosition)) { continue; }
+                int pathLength = Pathfinding.Instance.GetPathLength(unitGridPosition, targetGridPosition);
+                if(pathLength == 0 || pathLength > maxMoveDistance * 10) { continue; }
                 validGridPositions.Add(targetGridPosition);
             }
         }
