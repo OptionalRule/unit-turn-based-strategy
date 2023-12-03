@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,7 @@ public class MoveAction : BaseAction
 {
 
     private Queue<GridPosition> pathQueue = new Queue<GridPosition>();
+    private Dictionary<GridPosition, List<GridPosition>> pathCache = new Dictionary<GridPosition, List<GridPosition>>();
 
     private Vector3 targetMovePosition;
 
@@ -81,8 +83,8 @@ public class MoveAction : BaseAction
             return;
         }
         ActionStart(callback);
-        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), gridPosition, out int pathLength);
-        if (path != null && path.Count > 0)
+        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), gridPosition, out int p); //pathCache[gridPosition];
+        if (path.Count > 0)
         {
             foreach (var position in path)
             {
@@ -99,6 +101,7 @@ public class MoveAction : BaseAction
     private void StartMoving()
     {
         OnMoveActionStart?.Invoke(this, EventArgs.Empty);
+        pathCache.Clear();
     }
 
     private void StopMoving()
@@ -111,6 +114,11 @@ public class MoveAction : BaseAction
      */
     public override List<GridPosition> GetValidActionGridPositionList()
     {
+        if (pathCache.Count > 0)
+        {
+            return new List<GridPosition>(pathCache.Keys);
+        }
+
         List<GridPosition> validGridPositions = new List<GridPosition>();
         GridPosition unitGridPosition = unit.GetGridPosition();
         for (int x = -maxMoveDistance; x <= maxMoveDistance; x++)
@@ -122,13 +130,14 @@ public class MoveAction : BaseAction
 
                 // Check if distance between grid centers is within the max move distance radius.
                 float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(unitGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
-                if (distance > maxMoveDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
+                if (distance >= maxMoveDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
 
                 if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) {  continue; }
                 if(LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; } 
                 if(!Pathfinding.Instance.IsWalkable(targetGridPosition)) { continue; }
-                int pathLength = Pathfinding.Instance.GetPathLength(unitGridPosition, targetGridPosition);
+                List<GridPosition> pathToPosition = Pathfinding.Instance.FindPath(unitGridPosition, targetGridPosition, out int pathLength);
                 if(pathLength == 0 || pathLength > maxMoveDistance * 10) { continue; }
+                pathCache.Add(targetGridPosition, pathToPosition);
                 validGridPositions.Add(targetGridPosition);
             }
         }
@@ -235,6 +244,12 @@ public class MoveAction : BaseAction
         }
 
         return nearestPlayer;
+    }
+
+    public Dictionary<GridPosition, List<GridPosition>> PathCache
+    {
+        get { return pathCache; }
+        private set { pathCache = value; }
     }
 
 }

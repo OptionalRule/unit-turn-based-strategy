@@ -77,28 +77,19 @@ public class Pathfinding : MonoBehaviour
 
     public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition, out int pathLength)
     {
+        ResetPathNodes();
+        
         List<PathNode> openSet = new List<PathNode>();
         List<PathNode> closedSet = new List<PathNode>();
 
         PathNode startPathNode = gridSystem.GetGridObject(startGridPosition);
         PathNode targetPathNode = gridSystem.GetGridObject(targetGridPosition);
-        openSet.Add(startPathNode);
-
-        for (int x = 0; x < gridSystem.GetWidth(); x++)
-        {
-            for (int z = 0; z < gridSystem.GetHeight(); z++)
-            {
-                PathNode pathNode = gridSystem.GetGridObject(new GridPosition(x, z));
-                pathNode.SetGCost(int.MaxValue);
-                pathNode.SetHCost(int.MaxValue);
-                pathNode.CalculateFCost();
-                pathNode.ResetPreviousPathNode();
-            }
-        }
 
         startPathNode.SetGCost(0);
         startPathNode.SetHCost(CalculateDistanceCost(startGridPosition, targetGridPosition));
         startPathNode.CalculateFCost();
+
+        openSet.Add(startPathNode);
 
         while (openSet.Count > 0)
         {
@@ -150,29 +141,42 @@ public class Pathfinding : MonoBehaviour
         return gridSystem.GetGridObject(new GridPosition(x, z));
     }
 
-    private List<PathNode> GetNeighborList(PathNode currentNode)  // TODO move this to GridSystem and use Generics.
+    private void ResetPathNodes()
+    {
+        // Reset all nodes
+        for (int x = 0; x < gridSystem.GetWidth(); x++)
+        {
+            for (int z = 0; z < gridSystem.GetHeight(); z++)
+            {
+                PathNode pathNode = gridSystem.GetGridObject(new GridPosition(x, z));
+                pathNode.SetGCost(int.MaxValue);
+                pathNode.SetHCost(int.MaxValue);
+                pathNode.CalculateFCost();
+                pathNode.ResetPreviousPathNode();
+            }
+        }
+    }
+
+    private List<PathNode> GetNeighborList(PathNode centerNode)  // TODO move this to GridSystem and use Generics.
     {
         List<PathNode> neighbourList = new List<PathNode>();
 
-        GridPosition targetGridPosition = currentNode.GetGridPosition();
+        GridPosition targetGridPosition = centerNode.GetGridPosition();
 
         for (int x = -1; x <= 1; x++)
         {
             for (int z = -1; z <= 1; z++)
             {
-                if (x == 0 && z == 0)
-                {
-                    // Skip the current cell
-                    continue;
-                }
+                if(gridSystem.IsValidGridPosition(targetGridPosition.X + x, targetGridPosition.Z + z) == false) { continue; }
 
-                if (gridSystem.IsValidGridPosition(targetGridPosition.X + x, targetGridPosition.Z + z))
-                {
-                    neighbourList.Add(GetNode(targetGridPosition.X + x, targetGridPosition.Z + z));
-                }
+                PathNode neighborNode = GetNode(targetGridPosition.X + x, targetGridPosition.Z + z);
+                if (neighborNode == null) { continue; }
+                if (neighborNode == centerNode)  { continue; }
+                if (neighborNode.IsWalkable == false) { continue; }
+
+                neighbourList.Add(neighborNode);
             }
         }
-
         return neighbourList;
     }
 

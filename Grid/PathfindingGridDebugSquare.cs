@@ -20,8 +20,8 @@ public class PathfindingGridDebugSquare : GridDebugSquare
     protected override void Update()
     {
         base.Update();
-        gCostText.text = pathNode.GetGCost().ToString();
-        hCostText.text = pathNode.GetHCost().ToString();
-        fCostText.text = pathNode.GetFCost().ToString();
+        gCostText.text = "G: " + pathNode.GetGCost().ToString();
+        hCostText.text = "H: " + pathNode.GetHCost().ToString();
+        fCostText.text = "F: " + pathNode.GetFCost().ToString();
     }
 }

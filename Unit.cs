@@ -8,9 +8,6 @@ public class Unit : MonoBehaviour
     public static float UNIT_SHOULDER_HEIGHT = 1.7f;
     
     private GridPosition unitGridPosition;
-    private MoveAction moveAction;
-    private DodgeAction dodgeAction;
-    private ShootAction shootAction;
     private BaseAction[] baseActionArray;
     private int actionPoints;
     private const int ACTION_POINT_MAX = 2;
@@ -32,9 +29,6 @@ public class Unit : MonoBehaviour
 
     private void Awake()
     {
-        moveAction = GetComponent<MoveAction>();
-        dodgeAction = GetComponent<DodgeAction>();
-        shootAction = GetComponent<ShootAction>();
         baseActionArray = GetComponents<BaseAction>();
         healthSystem = GetComponent<HealthSystem>();
         unitRagdollSpawner = GetComponent<UnitRagdollSpawner>();
@@ -206,5 +200,16 @@ public class Unit : MonoBehaviour
     public bool HasCondition(UnitCondition unitCondition)
     {
         return unitConditions.Contains(unitCondition);
+    }
+
+    private void UnitActionSystem_OnSelectUnitChange(object sender, EventArgs empty)
+    {
+        if(UnitActionSystem.Instance.GetSelectedUnit() == this)
+        {
+            GetAction<MoveAction>().GetValidActionGridPositionList();
+        } else
+        {
+            GetAction<MoveAction>().PathCache.Clear();
+        }
     }
 }
