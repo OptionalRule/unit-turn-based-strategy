@@ -12,7 +12,8 @@ public class MoveAction : BaseAction
 
     private Vector3 targetMovePosition;
 
-    private int maxMoveDistance = 7;
+    private int maxGridMoveDistance = 7;
+    private float maxWorldMoveDistance;
 
     public event EventHandler OnMoveActionStart;
     public event EventHandler OnMoveActionStop;
@@ -25,6 +26,7 @@ public class MoveAction : BaseAction
     private void Start()
     {
         actionColor = Color.green;
+        maxWorldMoveDistance = LevelGrid.Instance.GetCellSize() * maxGridMoveDistance;
     }
 
     private void Update()
@@ -121,22 +123,22 @@ public class MoveAction : BaseAction
 
         List<GridPosition> validGridPositions = new List<GridPosition>();
         GridPosition unitGridPosition = unit.GetGridPosition();
-        for (int x = -maxMoveDistance; x <= maxMoveDistance; x++)
+        for (int x = -maxGridMoveDistance; x <= maxGridMoveDistance; x++)
         {
-            for (int z = -maxMoveDistance; z <= maxMoveDistance; z++)
+            for (int z = -maxGridMoveDistance; z <= maxGridMoveDistance; z++)
             {
                 GridPosition offsetGridPosition = new GridPosition(x, z);
                 GridPosition targetGridPosition = offsetGridPosition + unitGridPosition;
 
                 // Check if distance between grid centers is within the max move distance radius.
-                float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(unitGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
-                if (distance >= maxMoveDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
+                // float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(unitGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
+                // if (distance >= maxWorldMoveDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
 
                 if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) {  continue; }
                 if(LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; } 
                 if(!Pathfinding.Instance.IsWalkable(targetGridPosition)) { continue; }
                 List<GridPosition> pathToPosition = Pathfinding.Instance.FindPath(unitGridPosition, targetGridPosition, out int pathLength);
-                if(pathLength == 0 || pathLength > maxMoveDistance * 10) { continue; }
+                if(pathLength == 0 || pathLength > maxGridMoveDistance * 10) { continue; }
                 pathCache.Add(targetGridPosition, pathToPosition);
                 validGridPositions.Add(targetGridPosition);
             }
@@ -175,7 +177,7 @@ public class MoveAction : BaseAction
 
         if (bestEnemyAIAction.actionValue == 0)
         {
-            Unit closestPlayerUnit = FindNearestPlayer();
+            Unit closestPlayerUnit = FindNearestPlayerByPath();
             GridPosition closestPlayerGridPosition = FindClosestValidPositionToUnit(closestPlayerUnit);
             bestEnemyAIAction = new EnemyAIAction
             {
@@ -225,20 +227,62 @@ public class MoveAction : BaseAction
         return closestPosition;
     }
 
+    //private GridPosition FindDistantPointOnPath(List<GridPosition> path, int distance)
+    //{
+    //    // Ensure the path is not empty and the distance is positive
+    //    if (path == null || path.Count == 0 || distance <= 0)
+    //    {
+    //        throw new ArgumentException("Invalid path or distance");
+    //    }
 
-    private Unit FindNearestPlayer()
+    //    GridPosition startPoint = path[0];
+    //    GridPosition lastPoint = startPoint;
+    //    int accumulatedDistance = 0;
+
+    //    foreach (var point in path)
+    //    {
+    //        // Calculate the distance between the last point and the current point
+    //        int pointDistance = GridPosition.Distance(lastPoint, point);
+
+    //        // Check if adding this point's distance will exceed the maximum distance
+    //        if (accumulatedDistance + pointDistance > distance)
+    //        {
+    //            // Return the last valid point
+    //            return lastPoint;
+    //        }
+
+    //        // Update the last point and the accumulated distance
+    //        lastPoint = point;
+    //        accumulatedDistance += pointDistance;
+
+    //        // If the accumulated distance exactly matches the desired distance, return the current point
+    //        if (accumulatedDistance == distance)
+    //        {
+    //            return point;
+    //        }
+    //    }
+
+    //    // If the end of the path is reached without hitting the exact distance, return the last point
+    //    return lastPoint;
+    //}
+
+
+
+    private Unit FindNearestPlayerByPath()
     {
         // Assuming you have a way to get all enemy units in the game
         List<Unit> playerUnits = UnitManager.Instance.GetPlayerUnits();
         Unit nearestPlayer = null;
-        float nearestDistance = Mathf.Infinity;
+        float shortestPath = Mathf.Infinity;
 
         foreach (Unit playerUnit in playerUnits)
         {
-            float distance = Vector3.Distance(this.transform.position, playerUnit.transform.position);
-            if (distance < nearestDistance)
+            Pathfinding.Instance.FindPath(unit.GetGridPosition(), playerUnit.GetGridPosition(), out int pathLength);
+            if(pathLength == 0) { continue; } // No path found
+
+            if (pathLength < shortestPath)
             {
-                nearestDistance = distance;
+                shortestPath = pathLength;
                 nearestPlayer = playerUnit;
             }
         }
