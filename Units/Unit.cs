@@ -78,13 +78,10 @@ public class Unit : MonoBehaviour
         return unitGridPosition;
     }
 
-    public void SetGridPosition(GridPosition gridPosition)
+    public void SetGridPosition(GridPosition newGridPosition)
     {
-        if (gridPosition != unitGridPosition)
-        {
-            unitGridPosition = gridPosition;
-            LevelGrid.Instance.MoveUnitToGridPosition(unitGridPosition, gridPosition, this);
-        }
+        LevelGrid.Instance.MoveUnitToGridPosition(unitGridPosition, newGridPosition, this);
+        unitGridPosition = newGridPosition;
     }
 
     public Vector3 GetWorldPosition()

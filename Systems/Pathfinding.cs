@@ -93,6 +93,11 @@ public class Pathfinding : MonoBehaviour
 
     public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition, out int pathLength)
     {
+        return FindPath(startGridPosition, targetGridPosition, out pathLength, out List<PathNode> allPositions);
+    }
+
+    public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition, out int pathLength, out List<PathNode> allPositions)
+    {
         ResetPathNodes();
         
         List<PathNode> openSet = new List<PathNode>();
@@ -114,6 +119,7 @@ public class Pathfinding : MonoBehaviour
             if (currentNode == targetPathNode)
             {
                 pathLength = targetPathNode.GetFCost();
+                allPositions = closedSet;
                 return CalculatePath(targetPathNode);
             }
 
@@ -149,6 +155,7 @@ public class Pathfinding : MonoBehaviour
         // Out of nodes on the openList
         Debug.Log("Path not found");
         pathLength = 0;
+        allPositions = closedSet;
         return null;
     }
 

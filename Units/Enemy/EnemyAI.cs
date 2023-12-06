@@ -23,6 +23,7 @@ public class EnemyAI : MonoBehaviour
     private Queue<Unit> enemyUnits;
 
     private float timer;
+    private float timerMax = 0.5f;
 
     private void Awake()
     {
@@ -123,7 +124,7 @@ public class EnemyAI : MonoBehaviour
         if(bestEnemyAIActions.Count > 0 && bestEnemyAIActions[0].actionValue > 0)
         {
             selectedEnemyAIAction = bestEnemyAIActions[0];
-            timer = 1f;
+            timer = timerMax;
             currentState = State.TakingUnitAction;
         } else
         {
@@ -205,7 +206,7 @@ public class EnemyAI : MonoBehaviour
         if (!TurnSystem.Instance.IsPlayerTurn())
         {
             currentState = State.StartingEnemyTurn;
-            timer = 1f;
+            timer = timerMax;
         }
         else
         {
