@@ -76,8 +76,8 @@ public abstract class BaseAction : MonoBehaviour
             return null;
         }
 
-        enemyAIActions.Sort();
-        return enemyAIActions[0];
+        int randomIndex = UnityEngine.Random.Range(0, enemyAIActions.Count);
+        return enemyAIActions[randomIndex];
     }
 
     /*
@@ -99,7 +99,8 @@ public abstract class BaseAction : MonoBehaviour
         }
 
         enemyAIActions.Sort();
-        int highestValue = enemyAIActions.First().actionValue;
+        enemyAIActions.Reverse();
+        int highestValue = enemyAIActions[0].actionValue;
 
         // Filter out all actions with this top actionValue
         List<EnemyAIAction> topActions = enemyAIActions.Where(action => action.actionValue == highestValue).ToList();

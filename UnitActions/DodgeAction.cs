@@ -52,7 +52,7 @@ public class DodgeAction : BaseAction
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
     {
-        int _actionValue = 95;
+        int _actionValue = 0;
         if (unit.HasCondition(UnitCondition.Dodging))
         {
             _actionValue = 0;

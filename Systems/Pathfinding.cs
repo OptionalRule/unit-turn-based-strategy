@@ -74,6 +74,22 @@ public class Pathfinding : MonoBehaviour
         return false;
     }
 
+    public bool TryGetPath(GridPosition startGridPosition, GridPosition targetGridPosition, out List<GridPosition> path, out int pathLength)
+    {
+        if (IsWalkable(startGridPosition) == false || IsWalkable(targetGridPosition) == false)
+        {
+            path = null;
+            pathLength = 0;
+            return false;
+        }
+
+        path = FindPath(startGridPosition, targetGridPosition, out pathLength);
+        if (path == null)
+        {
+            return false;
+        }
+        return true;
+    }
 
     public List<GridPosition> FindPath(GridPosition startGridPosition, GridPosition targetGridPosition, out int pathLength)
     {

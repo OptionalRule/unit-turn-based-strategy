@@ -80,7 +80,11 @@ public class Unit : MonoBehaviour
 
     public void SetGridPosition(GridPosition gridPosition)
     {
-        unitGridPosition = gridPosition;
+        if (gridPosition != unitGridPosition)
+        {
+            unitGridPosition = gridPosition;
+            LevelGrid.Instance.MoveUnitToGridPosition(unitGridPosition, gridPosition, this);
+        }
     }
 
     public Vector3 GetWorldPosition()

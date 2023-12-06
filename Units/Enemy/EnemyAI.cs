@@ -117,10 +117,11 @@ public class EnemyAI : MonoBehaviour
         }
 
         List<EnemyAIAction> bestEnemyAIActions = GetBestEnemyAIActionOptions(activeUnit);
-
-        if(bestEnemyAIActions.Count > 0)
+        bestEnemyAIActions.Sort();
+        bestEnemyAIActions.Reverse();
+        DebugLogEnemyAIActions(bestEnemyAIActions);
+        if(bestEnemyAIActions.Count > 0 && bestEnemyAIActions[0].actionValue > 0)
         {
-            bestEnemyAIActions.Sort((a, b) => b.actionValue.CompareTo(a.actionValue));
             selectedEnemyAIAction = bestEnemyAIActions[0];
             timer = 1f;
             currentState = State.TakingUnitAction;
@@ -133,7 +134,7 @@ public class EnemyAI : MonoBehaviour
 
     private List<EnemyAIAction> GetBestEnemyAIActionOptions(Unit actingUnit) { 
         List<EnemyAIAction> bestEnemyAIActions = new List<EnemyAIAction>();
-           foreach (BaseAction baseAction in actingUnit.GetBaseActions())
+        foreach (BaseAction baseAction in actingUnit.GetBaseActions())
         {
             if (!actingUnit.CanSpendActionPointsToTakeAction(baseAction))
             {
@@ -150,8 +151,17 @@ public class EnemyAI : MonoBehaviour
         return bestEnemyAIActions;
     }
 
+    private void DebugLogEnemyAIActions(List<EnemyAIAction> enemyAIActions)
+    {
+        foreach (EnemyAIAction enemyAIAction in enemyAIActions)
+        {
+            Debug.Log($"{activeUnit}: {enemyAIAction}");
+        }
+    }
+
     private void HandleSelectedAction()
     {
+        Debug.Log($"{activeUnit} Taking action: {selectedEnemyAIAction}");
         if (selectedEnemyAIAction == null)
         {
             Debug.LogError("No action selected!");
@@ -181,7 +191,7 @@ public class EnemyAI : MonoBehaviour
         activeUnit = unit;
         selectedEnemyAIAction = null;
         currentState = State.SelectingAction;
-        Debug.Log("Active unit changed to " + activeUnit.name); 
+        // Debug.Log("Active unit changed to " + activeUnit.name); 
     }
 
     private void ClearEnemyAI()

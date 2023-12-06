@@ -51,7 +51,7 @@ public class LevelGrid : MonoBehaviour
         Pathfinding.Instance.SetUp(gridWidth, gridHeight, gridCellSize);
     }
 
-    public void AddUnitToGrid(GridPosition gridPosition, Unit unit)
+   public void AddUnitToGrid(GridPosition gridPosition, Unit unit)
     {
         GridSquare gridSquare = Instance.gridSystem.GetGridObject(gridPosition);
         gridSquare.AddUnit(unit);
@@ -61,6 +61,12 @@ public class LevelGrid : MonoBehaviour
     {
         GridSquare gridSquare = Instance.gridSystem.GetGridObject(gridPosition);
         gridSquare.RemoveUnit(unit);
+    }
+
+    public void MoveUnitToGridPosition(GridPosition oldGridPosition, GridPosition newGridPosition, Unit unit)
+    {
+        RemoveUnitFromGrid(oldGridPosition, unit);
+        AddUnitToGrid(newGridPosition, unit);
     }
 
     //Passthroughs for encapsulation

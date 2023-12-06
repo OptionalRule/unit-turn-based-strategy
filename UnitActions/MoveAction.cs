@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,14 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class MoveAction : BaseAction
 {
-
-    private Queue<GridPosition> pathQueue = new Queue<GridPosition>();
-    private Dictionary<GridPosition, List<GridPosition>> pathCache = new Dictionary<GridPosition, List<GridPosition>>();
-
-    private Vector3 targetMovePosition;
-
-    private int maxGridMoveDistance = 7;
+    private Movement movement;
+    private int maxGridMoveDistance = 4;
     private float maxWorldMoveDistance;
+    private Dictionary<GridPosition, List<GridPosition>> pathCache = new Dictionary<GridPosition, List<GridPosition>>();
 
     public event EventHandler OnMoveActionStart;
     public event EventHandler OnMoveActionStop;
@@ -27,48 +22,27 @@ public class MoveAction : BaseAction
     {
         actionColor = Color.green;
         maxWorldMoveDistance = LevelGrid.Instance.GetCellSize() * maxGridMoveDistance;
+        movement = new Movement(unitAnimator, gameObject.transform, moveSpeed, rotateSpeed, stopDistance);
     }
 
     private void Update()
     {
         if (IsActive)
         {
-            if (pathQueue.Count > 0)
-            {
-                Move();
-            }
-            else
-            {
-                StopMoving();
-                ActionComplete();
-            }
+            HandleMovement();
         }
     }
-    private void Move()
+
+    private void HandleMovement()
     {
-        if (pathQueue.Count == 0)
+        if (movement.IsMoving)
+        {
+            movement.ContinueMove();
+        }
+        else
         {
             StopMoving();
             ActionComplete();
-            return;
-        }
-
-        targetMovePosition = LevelGrid.Instance.GridPositionToWorldPosition(pathQueue.Peek());
-        Vector3 moveDirection = (targetMovePosition - transform.position).normalized;
-        transform.position += moveDirection * Time.deltaTime * this.moveSpeed;
-        transform.forward = Vector3.Lerp(transform.forward, moveDirection, Time.deltaTime * rotateSpeed);
-        float distanceToMoveTarget = Vector3.Distance(transform.position, targetMovePosition);
-
-        if (distanceToMoveTarget <= stopDistance)
-        {
-            // Reached the current target position, move to the next
-            pathQueue.Dequeue();
-            UpdateUnitGridPosition();
-            if (pathQueue.Count == 0)
-            {
-                StopMoving();
-                ActionComplete();
-            }
         }
     }
 
@@ -81,18 +55,14 @@ public class MoveAction : BaseAction
     {
         if (!CanTakeAction(gridPosition))
         {
-            callback.Invoke();
+            callback?.Invoke();
             return;
         }
         ActionStart(callback);
-        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), gridPosition, out int p); //pathCache[gridPosition];
-        if (path.Count > 0)
+
+        if (Pathfinding.Instance.TryGetPath(unit.GetGridPosition(), gridPosition, out var path, out int pathLength))
         {
-            foreach (var position in path)
-            {
-                pathQueue.Enqueue(position);
-            }
-            StartMoving();
+            movement.StartMove(path, OnMoveStarted);
         }
         else
         {
@@ -100,7 +70,7 @@ public class MoveAction : BaseAction
         }
     }
 
-    private void StartMoving()
+    private void OnMoveStarted()
     {
         OnMoveActionStart?.Invoke(this, EventArgs.Empty);
         pathCache.Clear();
@@ -109,55 +79,8 @@ public class MoveAction : BaseAction
     private void StopMoving()
     {
         OnMoveActionStop?.Invoke(this, EventArgs.Empty);
-    }
-
-    /* 
-     * Returns all of the grid positions within range that do not have a unit on them.
-     */
-    public override List<GridPosition> GetValidActionGridPositionList()
-    {
-        if (pathCache.Count > 0)
-        {
-            return new List<GridPosition>(pathCache.Keys);
-        }
-
-        List<GridPosition> validGridPositions = new List<GridPosition>();
-        GridPosition unitGridPosition = unit.GetGridPosition();
-        for (int x = -maxGridMoveDistance; x <= maxGridMoveDistance; x++)
-        {
-            for (int z = -maxGridMoveDistance; z <= maxGridMoveDistance; z++)
-            {
-                GridPosition offsetGridPosition = new GridPosition(x, z);
-                GridPosition targetGridPosition = offsetGridPosition + unitGridPosition;
-
-                // Check if distance between grid centers is within the max move distance radius.
-                // float distance = Vector3.Distance(LevelGrid.Instance.GridPositionToWorldPosition(unitGridPosition), LevelGrid.Instance.GridPositionToWorldPosition(targetGridPosition));
-                // if (distance >= maxWorldMoveDistance) { continue; }  // TODO:  Check distance between unit and target transforms instead.
-
-                if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) {  continue; }
-                if(LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) { continue; } 
-                if(!Pathfinding.Instance.IsWalkable(targetGridPosition)) { continue; }
-                List<GridPosition> pathToPosition = Pathfinding.Instance.FindPath(unitGridPosition, targetGridPosition, out int pathLength);
-                if(pathLength == 0 || pathLength > maxGridMoveDistance * 10) { continue; }
-                pathCache.Add(targetGridPosition, pathToPosition);
-                validGridPositions.Add(targetGridPosition);
-            }
-        }
-        return validGridPositions;
-    }
-
-    /* 
-     ** Update the units position on the level grid if it has changed.
-     **/
-    public void UpdateUnitGridPosition()
-    {
-        GridPosition newGridPosition = LevelGrid.Instance.WorldPositionToGridPosition(this.transform.position);
-        if (unit.GetGridPosition() != newGridPosition)
-        {
-            LevelGrid.Instance.RemoveUnitFromGrid(unit.GetGridPosition(), unit);
-            unit.SetGridPosition(newGridPosition);
-            LevelGrid.Instance.AddUnitToGrid(unit.GetGridPosition(), unit);
-        }
+        movement.StopMove();
+        unit.SetGridPosition(LevelGrid.Instance.WorldPositionToGridPosition(unit.transform.position));
     }
 
     public override string Label()
@@ -165,112 +88,149 @@ public class MoveAction : BaseAction
         return "Move";
     }
 
+    public override List<GridPosition> GetValidActionGridPositionList()
+    {
+        List<GridPosition> validGridPositions = new List<GridPosition>();
+        GridPosition unitGridPosition = unit.GetGridPosition();
+
+        for (int x = -maxGridMoveDistance; x <= maxGridMoveDistance; x++)
+        {
+            for (int z = -maxGridMoveDistance; z <= maxGridMoveDistance; z++)
+            {
+                GridPosition offsetGridPosition = new GridPosition(x, z);
+                GridPosition targetGridPosition = offsetGridPosition + unitGridPosition;
+
+                if (pathCache.ContainsKey(targetGridPosition))
+                {
+                    validGridPositions.Add(targetGridPosition);
+                    continue;
+                }
+
+                if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) continue;
+                if (LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) continue;
+                if (!Pathfinding.Instance.IsWalkable(targetGridPosition)) continue;
+
+                if (!pathCache.ContainsKey(targetGridPosition))
+                {
+                    List<GridPosition> pathToPosition = Pathfinding.Instance.FindPath(unitGridPosition, targetGridPosition, out int pathLength);
+                    if (pathLength == 0 || pathLength > maxGridMoveDistance * 10) continue;
+
+                    pathCache.Add(targetGridPosition, pathToPosition);
+                }
+
+                validGridPositions.Add(targetGridPosition);
+            }
+        }
+        return validGridPositions;
+    }
+
+    public Dictionary<GridPosition, List<GridPosition>> PathCache
+    {
+        get { return pathCache; }
+        private set { pathCache = value; }
+    }
+
     public override EnemyAIAction GetBestEnemyAIAction()
     {
         EnemyAIAction bestEnemyAIAction = base.GetBestEnemyAIAction();
         EnemyAIAction currentPositionActionValue = GetEnemyAIActionValueForPosition(unit.GetGridPosition());
-        if (currentPositionActionValue.actionValue > 0)
+
+        // If the current position ties with highest value then stay where you are.
+        if (currentPositionActionValue.actionValue >= bestEnemyAIAction.actionValue)
         {
             bestEnemyAIAction = currentPositionActionValue;
-            bestEnemyAIAction.actionValue = 1;
         }
 
+        // If the current position is not the highest value, then find the best position in a path to nearest player.
         if (bestEnemyAIAction.actionValue == 0)
         {
             Unit closestPlayerUnit = FindNearestPlayerByPath();
-            GridPosition closestPlayerGridPosition = FindClosestValidPositionToUnit(closestPlayerUnit);
+
+            GridPosition moveToPosition = FindDistantPositionOnPath(closestPlayerUnit, maxWorldMoveDistance);
             bestEnemyAIAction = new EnemyAIAction
             {
-                gridPosition = closestPlayerGridPosition,
-                actionValue = 100
+                gridPosition = moveToPosition,
+                actionValue = moveToPosition == unit.GetGridPosition() ? 0 : 100
             };
         }
         return bestEnemyAIAction;
     }
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
-    {
-        int _actionValue = 0;
-        int targetCountAtPosition = unit.GetAction<ShootAction>().GetTargetCountAtGridPosition(gridPosition);
-        if (targetCountAtPosition > 0)
-        {
-            _actionValue = Mathf.Clamp(100 - (10 * targetCountAtPosition), 0, 100);
-        }
-
+    { // Abstract Class from Parent.  This is the method that is called by the parent class.
         return new EnemyAIAction
         {
             gridPosition = gridPosition,
-            actionValue = _actionValue
+            actionValue = CalculateTacticalActionValue(gridPosition)
         };
     }
 
-    public GridPosition FindClosestValidPositionToUnit(Unit targetUnit)
+    public GridPosition FindDistantPositionOnPath(Unit targetUnit, float worldDistance)
     {
-        Vector3 targetUnitPosition = targetUnit.transform.position;
+        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), targetUnit.GetGridPosition(), out int pathLength);
+        if (pathLength == 0) { return unit.GetGridPosition(); }
 
-        List<GridPosition> validPositions = GetValidActionGridPositionList();
-        GridPosition closestPosition = unit.GetGridPosition();
-        float closestDistance = Mathf.Infinity;
+        GridPosition distantPoint = FindDistantPointOnPath(path, worldDistance);
+        return distantPoint;
+    }
 
-        foreach (GridPosition gridPosition in validPositions)
+    private GridPosition FindDistantPointOnPath(List<GridPosition> path, float maxWorldDistance)
+    {
+        // Ensure the path is not empty and the distance is positive
+        if (path == null || path.Count == 0 || maxWorldDistance <= 0)
         {
-            Vector3 gridWorldPosition = LevelGrid.Instance.GridPositionToWorldPosition(gridPosition);
-            float distanceToTargetUnit = Vector3.Distance(targetUnitPosition, gridWorldPosition);
+            Debug.LogError("Invalid path or distance");
+        }
 
-            if (distanceToTargetUnit < closestDistance)
+        GridPosition startPoint = path[0];
+        GridPosition previousPoint = startPoint;
+        GridPosition endPoint = previousPoint;
+        float accumulatedDistance = 0;
+
+        for (int i = 1; i < path.Count; i++)
+        {
+            GridPosition currentPoint = path[i];
+            float pointDistance = LevelGrid.Instance.GetDistanceBetween(previousPoint, currentPoint);
+
+            if (accumulatedDistance + pointDistance > maxWorldDistance)
             {
-                closestDistance = distanceToTargetUnit;
-                closestPosition = gridPosition;
+                break;
+            }
+
+            previousPoint = currentPoint;
+            accumulatedDistance += pointDistance;
+
+            if (accumulatedDistance == maxWorldDistance) // Handle edge case of exact match.
+            {
+                endPoint = previousPoint;
+                break;
             }
         }
 
-        return closestPosition;
+        if (accumulatedDistance < maxWorldDistance)
+        {
+            endPoint = previousPoint;  // If exact distance not met, use the last point reached
+        }
+
+        // Check if endPoint has a Unit and backtrack if necessary
+        while (LevelGrid.Instance.HasAnyUnitOnGridPosition(endPoint) && endPoint != startPoint)
+        {
+            int currentIndex = path.IndexOf(endPoint);
+            if (currentIndex > 0)
+            {
+                endPoint = path[currentIndex - 1];
+            }
+            else
+            {
+                // No valid position found, return the start point or handle as needed
+                return startPoint;
+            }
+        }
+        return endPoint;
     }
-
-    //private GridPosition FindDistantPointOnPath(List<GridPosition> path, int distance)
-    //{
-    //    // Ensure the path is not empty and the distance is positive
-    //    if (path == null || path.Count == 0 || distance <= 0)
-    //    {
-    //        throw new ArgumentException("Invalid path or distance");
-    //    }
-
-    //    GridPosition startPoint = path[0];
-    //    GridPosition lastPoint = startPoint;
-    //    int accumulatedDistance = 0;
-
-    //    foreach (var point in path)
-    //    {
-    //        // Calculate the distance between the last point and the current point
-    //        int pointDistance = GridPosition.Distance(lastPoint, point);
-
-    //        // Check if adding this point's distance will exceed the maximum distance
-    //        if (accumulatedDistance + pointDistance > distance)
-    //        {
-    //            // Return the last valid point
-    //            return lastPoint;
-    //        }
-
-    //        // Update the last point and the accumulated distance
-    //        lastPoint = point;
-    //        accumulatedDistance += pointDistance;
-
-    //        // If the accumulated distance exactly matches the desired distance, return the current point
-    //        if (accumulatedDistance == distance)
-    //        {
-    //            return point;
-    //        }
-    //    }
-
-    //    // If the end of the path is reached without hitting the exact distance, return the last point
-    //    return lastPoint;
-    //}
-
-
 
     private Unit FindNearestPlayerByPath()
     {
-        // Assuming you have a way to get all enemy units in the game
         List<Unit> playerUnits = UnitManager.Instance.GetPlayerUnits();
         Unit nearestPlayer = null;
         float shortestPath = Mathf.Infinity;
@@ -278,7 +238,7 @@ public class MoveAction : BaseAction
         foreach (Unit playerUnit in playerUnits)
         {
             Pathfinding.Instance.FindPath(unit.GetGridPosition(), playerUnit.GetGridPosition(), out int pathLength);
-            if(pathLength == 0) { continue; } // No path found
+            if (pathLength == 0) { continue; } // No path found
 
             if (pathLength < shortestPath)
             {
@@ -290,10 +250,47 @@ public class MoveAction : BaseAction
         return nearestPlayer;
     }
 
-    public Dictionary<GridPosition, List<GridPosition>> PathCache
+    // ENEMY AI ACTION VALUE METHODS
+
+    private int CalculateTacticalActionValue(GridPosition position)
     {
-        get { return pathCache; }
-        private set { pathCache = value; }
+        int actionValue = 0;
+
+        // 1. Targets: Prefer positions with more targets in line of sight
+        if (IsInLineOfSightOfEnemy(position, out int targetCount))
+        {
+            actionValue += 40 + (20 * targetCount); // Increase value for safer positions
+            Mathf.Clamp(actionValue, 0, 80);
+        } else
+        {
+            return 0; // No targets, no value.
+        }
+
+        // 2. Consider a proximity to target.  Closer targets are more valuable for melee, but less valuable for ranged.
+
+        // 3. Strategic Position: Bonus for higher ground or cover
+        if (IsHighGround(position) || ProvidesCover(position))
+        {
+            actionValue += 20; // Increase value for strategic positions
+        }
+
+        // Ensure action value is within a valid range
+        return Mathf.Clamp(actionValue, 0, 100);
     }
 
+    private bool IsInLineOfSightOfEnemy(GridPosition gridPosition, out int targetCountAtPosition)
+    {
+        targetCountAtPosition = unit.GetAction<ShootAction>().GetTargetCountAtGridPosition(gridPosition);
+        return targetCountAtPosition > 0;
+    }
+
+    private bool IsHighGround(GridPosition position)
+    {
+        return false; // Implement logic to check if the position is on high ground
+    }
+
+    private bool ProvidesCover(GridPosition position)
+    {
+        return false; // Implement logic to check if the position provides cover
+    }
 }
