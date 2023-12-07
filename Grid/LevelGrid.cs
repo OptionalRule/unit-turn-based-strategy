@@ -76,7 +76,9 @@ public class LevelGrid : MonoBehaviour
 
     public bool IsValidGridPosition(GridPosition gridPosition) => gridSystem.IsValidGridPosition(gridPosition);
 
-    public float GetDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB) => gridSystem.GetDistanceBetween(gridPositionA, gridPositionB);
+    public float GetWorldDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB) => gridSystem.GetWorldDistanceBetween(gridPositionA, gridPositionB);
+
+    public int GetGridDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB) => gridSystem.GetGridDistanceBetween(gridPositionA, gridPositionB);
 
     public int GetWidth() => gridSystem.GetWidth();
 
@@ -97,6 +99,25 @@ public class LevelGrid : MonoBehaviour
     {
         GridSquare gridSquare = gridSystem.GetGridObject(gridPosition);
         return gridSquare.GetUnit();
+    }
+
+    public List<GridPosition> GetGridPositionsWithinRange(GridPosition centerPosition, int gridDistance)
+    {
+        List<GridPosition> gridPositionsWithinRange = new List<GridPosition>();
+        for (int x = -gridDistance; x <= gridDistance; x++)
+        {
+            for (int z = -gridDistance; z <= gridDistance; z++)
+            {
+                GridPosition offsetGridPosition = new GridPosition(x, z);
+                GridPosition targetGridPosition = offsetGridPosition + centerPosition;
+
+                if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) continue;
+                if (LevelGrid.Instance.GetGridDistanceBetween(centerPosition, targetGridPosition) > gridDistance) continue;
+
+                gridPositionsWithinRange.Add(targetGridPosition);
+            }
+        }
+        return gridPositionsWithinRange;
     }
 
     private void OnDrawGizmos()

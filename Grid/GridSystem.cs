@@ -35,10 +35,16 @@ public class GridSystem<TGridObject>
         return new Vector3(gridPosition.X, 0, gridPosition.Z) * cellSize;
     }
 
-    public float GetDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB)
+    public float GetWorldDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB)
     {
         return Vector3.Distance(GetWorldPosition(gridPositionA), GetWorldPosition(gridPositionB));
     }
+
+    public int GetGridDistanceBetween(GridPosition gridPositionA, GridPosition gridPositionB)
+    {
+        return Mathf.RoundToInt(GetWorldDistanceBetween(gridPositionA, gridPositionB) / cellSize);
+    }
+
 
     public GridPosition GetGridPosition(Vector3 worldPosition)
     {

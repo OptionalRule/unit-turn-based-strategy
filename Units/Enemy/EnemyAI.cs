@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using OptionalRule.Utility;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -81,7 +82,8 @@ public class EnemyAI : MonoBehaviour
 
     private void StartEnemyTurn()
     {
-        enemyUnits = new Queue<Unit>(UnitManager.Instance.GetEnemyUnits());
+        List<Unit> randomnEnemyInitiative = ShuffleUtility.Shuffle(UnitManager.Instance.GetEnemyUnits());
+        enemyUnits = new Queue<Unit>(randomnEnemyInitiative);
         if (enemyUnits.Count > 0)
         {
                currentState = State.SelectingActiveUnit;
@@ -120,7 +122,7 @@ public class EnemyAI : MonoBehaviour
         List<EnemyAIAction> bestEnemyAIActions = GetBestEnemyAIActionOptions(activeUnit);
         bestEnemyAIActions.Sort();
         bestEnemyAIActions.Reverse();
-        DebugLogEnemyAIActions(bestEnemyAIActions);
+        // DebugLogEnemyAIActions(bestEnemyAIActions);
         if(bestEnemyAIActions.Count > 0 && bestEnemyAIActions[0].actionValue > 0)
         {
             selectedEnemyAIAction = bestEnemyAIActions[0];
@@ -162,7 +164,7 @@ public class EnemyAI : MonoBehaviour
 
     private void HandleSelectedAction()
     {
-        Debug.Log($"{activeUnit} Taking action: {selectedEnemyAIAction}");
+        //Debug.Log($"{activeUnit} Taking action: {selectedEnemyAIAction}");
         if (selectedEnemyAIAction == null)
         {
             Debug.LogError("No action selected!");

@@ -90,39 +90,48 @@ public class MoveAction : BaseAction
 
     public override List<GridPosition> GetValidActionGridPositionList()
     {
+        return GetValidActionGridPositionList(unit.GetGridPosition());
+    }
+
+    /*
+     ** Returns a list of valid grid positions that the unit can move to.
+     ** This method is used by the EnemyAI to determine the best move action
+     ** to use around a specific target or goal position.
+     **/
+    public List<GridPosition> GetValidActionGridPositionList(GridPosition centerPosition)
+    {
         List<GridPosition> validGridPositions = new List<GridPosition>();
-        GridPosition unitGridPosition = unit.GetGridPosition();
+        List<GridPosition> allPossiblePositions = LevelGrid.Instance.GetGridPositionsWithinRange(centerPosition, maxGridMoveDistance);
 
-        for (int x = -maxGridMoveDistance; x <= maxGridMoveDistance; x++)
+        foreach (GridPosition gridPosition in allPossiblePositions)
         {
-            for (int z = -maxGridMoveDistance; z <= maxGridMoveDistance; z++)
+            if (pathCache.ContainsKey(gridPosition))
             {
-                GridPosition offsetGridPosition = new GridPosition(x, z);
-                GridPosition targetGridPosition = offsetGridPosition + unitGridPosition;
-
-                if (pathCache.ContainsKey(targetGridPosition))
-                {
-                    validGridPositions.Add(targetGridPosition);
-                    continue;
-                }
-
-                if (!LevelGrid.Instance.IsValidGridPosition(targetGridPosition)) continue;
-                if (LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition)) continue;
-                if (!Pathfinding.Instance.IsWalkable(targetGridPosition)) continue;
-
-                if (!pathCache.ContainsKey(targetGridPosition))
-                {
-                    List<GridPosition> pathToPosition = Pathfinding.Instance.FindPath(unitGridPosition, targetGridPosition, out int pathLength);
-                    if (pathLength == 0 || pathLength > maxGridMoveDistance * 10) continue;
-
-                    pathCache.Add(targetGridPosition, pathToPosition);
-                }
-
-                validGridPositions.Add(targetGridPosition);
+                validGridPositions.Add(gridPosition);
+                continue;
             }
+
+            if (!IsValidMovePosition(gridPosition)) continue;
+
+            List<GridPosition> pathToPosition = Pathfinding.Instance.FindPath(centerPosition, gridPosition, out int pathLength);
+
+            if (pathLength == 0 || pathLength > maxGridMoveDistance * 10) continue;
+
+            pathCache.Add(gridPosition, pathToPosition);
+            validGridPositions.Add(gridPosition);
         }
+        Debug.Log("Valid Move Positions: " + validGridPositions.Count);
         return validGridPositions;
     }
+
+    public bool IsValidMovePosition(GridPosition targetGridPosition)
+    {
+        bool result =   !LevelGrid.Instance.IsValidGridPosition(targetGridPosition) ||
+                        LevelGrid.Instance.HasAnyUnitOnGridPosition(targetGridPosition) ||
+                        !Pathfinding.Instance.IsWalkable(targetGridPosition);
+        return !result;
+    }
+
 
     public Dictionary<GridPosition, List<GridPosition>> PathCache
     {
@@ -142,18 +151,37 @@ public class MoveAction : BaseAction
         }
 
         // If the current position is not the highest value, then find the best position in a path to nearest player.
+        /* Refactor this and move into seperate methods.
+         * Find the player unit closest by path to this unit.
+         * Get a list of valid grid positions within weapon range around teh player unit.
+         * Select a random position from the list of best firing positions around the player unit.
+         * Move to best position along that path.
+         */
         if (bestEnemyAIAction.actionValue == 0)
         {
-            Unit closestPlayerUnit = FindNearestPlayerByPath();
 
-            GridPosition moveToPosition = FindDistantPositionOnPath(closestPlayerUnit, maxWorldMoveDistance);
-            bestEnemyAIAction = new EnemyAIAction
-            {
-                gridPosition = moveToPosition,
-                actionValue = moveToPosition == unit.GetGridPosition() ? 0 : 100
-            };
+            bestEnemyAIAction = GetBestEnemyAIActionWhenNoTarget();
         }
         return bestEnemyAIAction;
+    }
+
+    private EnemyAIAction GetBestEnemyAIActionWhenNoTarget()
+    {
+        // If there is no target, then find the best position in a path to nearest player.
+        /* Refactor this and move into seperate methods.
+         *         * Find the player unit closest by path to this unit.
+         *                 * Get a list of valid grid positions within weapon range around teh player unit.
+         *                         * Select a random position from the list of best firing positions around the player unit.
+         *                                 * Move to best position along that path.
+         *                                         */
+        Unit closestPlayerUnit = FindNearestPlayerByPath();
+
+        GridPosition moveToPosition = FindDistantPositionOnPath(closestPlayerUnit, maxWorldMoveDistance);
+        return new EnemyAIAction
+        {
+            gridPosition = moveToPosition,
+            actionValue = moveToPosition == unit.GetGridPosition() ? 0 : 100
+        };
     }
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
@@ -190,7 +218,7 @@ public class MoveAction : BaseAction
         for (int i = 1; i < path.Count; i++)
         {
             GridPosition currentPoint = path[i];
-            float pointDistance = LevelGrid.Instance.GetDistanceBetween(previousPoint, currentPoint);
+            float pointDistance = LevelGrid.Instance.GetWorldDistanceBetween(previousPoint, currentPoint);
 
             if (accumulatedDistance + pointDistance > maxWorldDistance)
             {

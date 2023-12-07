@@ -126,7 +126,7 @@ public class ShootAction : BaseAction
 
             if (IsTargetBlocked(targetUnit)) { continue; }
 
-            if (LevelGrid.Instance.GetDistanceBetween(fromGridPosition, targetGridPosition) <= maxShootDistance)
+            if (LevelGrid.Instance.GetWorldDistanceBetween(fromGridPosition, targetGridPosition) <= maxShootDistance)
             {
                 validGridPositions.Add(targetGridPosition);
             }
