@@ -183,7 +183,7 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        int damage = 1; // GameDice.Instance.Roll(7, 10);
+        int damage = GameDice.Instance.Roll(7, 10);
         targetUnit.ApplyDamage(damage, transform.position);
     }
 
@@ -201,5 +201,10 @@ public class ShootAction : BaseAction
     public int GetTargetCountAtGridPosition(GridPosition gridPosition)
     {
         return GetValidActionGridPositionList(gridPosition).Count;
+    }
+
+    public int GetMaxRange()
+    {
+        return maxShootDistance;
     }
 }

@@ -167,20 +167,33 @@ public class MoveAction : BaseAction
 
     private EnemyAIAction GetBestEnemyAIActionWhenNoTarget()
     {
-        // If there is no target, then find the best position in a path to nearest player.
-        /* Refactor this and move into seperate methods.
-         *         * Find the player unit closest by path to this unit.
-         *                 * Get a list of valid grid positions within weapon range around teh player unit.
-         *                         * Select a random position from the list of best firing positions around the player unit.
-         *                                 * Move to best position along that path.
-         *                                         */
-        Unit closestPlayerUnit = FindNearestPlayerByPath();
+        // If there is no target, then find the best position in a path to nearest best shooting position.
+        Unit closestPlayerUnit = FindClosestPlayerByPath();
+        if (closestPlayerUnit == null) { return new EnemyAIAction(); }
 
-        GridPosition moveToPosition = FindDistantPositionOnPath(closestPlayerUnit, maxWorldMoveDistance);
+        List<GridPosition> possibleFiringPositions = LevelGrid.Instance.GetGridPositionsWithinRange(closestPlayerUnit.GetGridPosition(), unit.GetAction<ShootAction>().GetMaxRange());
+        List<EnemyAIAction> possibleActions = new List<EnemyAIAction>();
+
+        foreach (GridPosition gridPosition in possibleFiringPositions)
+        {
+            if(!IsValidMovePosition(gridPosition)) { continue; }
+            possibleActions.Add(GetEnemyAIActionValueForPosition(gridPosition));
+        }
+
+        List<EnemyAIAction> topActions = FilterTopActions(possibleActions);
+        List<GridPosition> topPositions = new List<GridPosition>();
+
+        foreach (EnemyAIAction action in topActions)
+        {
+            topPositions.Add(action.gridPosition);
+        }
+
+        GridPosition moveToPosition = FindClosestPositionByPath(topPositions);
+        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), moveToPosition, out int pathLength);
         return new EnemyAIAction
         {
-            gridPosition = moveToPosition,
-            actionValue = moveToPosition == unit.GetGridPosition() ? 0 : 100
+            gridPosition = FindDistantPointOnPath(path, maxWorldMoveDistance),
+            actionValue = 100
         };
     }
 
@@ -257,7 +270,7 @@ public class MoveAction : BaseAction
         return endPoint;
     }
 
-    private Unit FindNearestPlayerByPath()
+    private Unit FindClosestPlayerByPath()
     {
         List<Unit> playerUnits = UnitManager.Instance.GetPlayerUnits();
         Unit nearestPlayer = null;
@@ -276,6 +289,24 @@ public class MoveAction : BaseAction
         }
 
         return nearestPlayer;
+    }
+
+    private GridPosition FindClosestPositionByPath(List<GridPosition> gridPositions)
+    {
+        float shortestPath = Mathf.Infinity;
+        GridPosition closestPosition = unit.GetGridPosition();
+        foreach (GridPosition gridPosition in gridPositions)
+        {
+            Pathfinding.Instance.FindPath(unit.GetGridPosition(), gridPosition, out int pathLength);
+            if (pathLength == 0) { continue; } // No path found
+
+            if (pathLength < shortestPath)
+            {
+                shortestPath = pathLength;
+                closestPosition = gridPosition;
+            }
+        }
+        return closestPosition;
     }
 
     // ENEMY AI ACTION VALUE METHODS
@@ -321,4 +352,25 @@ public class MoveAction : BaseAction
     {
         return false; // Implement logic to check if the position provides cover
     }
+
+    // OTHER UTILITY METHODS
+    List<EnemyAIAction> FilterTopActions(List<EnemyAIAction> actions)
+    {
+        if (actions == null || actions.Count == 0)
+        {
+            return new List<EnemyAIAction>(); // Return an empty list if input is null or empty.
+        }
+
+        // Sort the list based on actionValue.
+        actions.Sort();
+
+        // The last item now has the highest actionValue.
+        int topActionValue = actions[actions.Count - 1].actionValue;
+
+        // Find all actions that have this top actionValue.
+        List<EnemyAIAction> topActions = actions.FindAll(action => action.actionValue == topActionValue);
+
+        return topActions;
+    }
+
 }
