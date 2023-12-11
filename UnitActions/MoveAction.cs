@@ -9,6 +9,7 @@ public class MoveAction : BaseAction
     private int maxGridMoveDistance = 4;
     private float maxWorldMoveDistance;
     private Dictionary<GridPosition, List<GridPosition>> pathCache = new Dictionary<GridPosition, List<GridPosition>>();
+    // private List<GridPosition> validGridPositionCache = new List<GridPosition>();
 
     public event EventHandler OnMoveActionStart;
     public event EventHandler OnMoveActionStop;
@@ -53,6 +54,8 @@ public class MoveAction : BaseAction
 
     public override void TakeAction(GridPosition gridPosition, Action callback)
     {
+        // pathCache.Clear();
+        // validGridPositionCache.Clear();
         if (!CanTakeAction(gridPosition))
         {
             callback?.Invoke();
@@ -73,7 +76,6 @@ public class MoveAction : BaseAction
     private void OnMoveStarted()
     {
         OnMoveActionStart?.Invoke(this, EventArgs.Empty);
-        pathCache.Clear();
     }
 
     private void StopMoving()
@@ -105,11 +107,11 @@ public class MoveAction : BaseAction
 
         foreach (GridPosition gridPosition in allPossiblePositions)
         {
-            if (pathCache.ContainsKey(gridPosition))
-            {
-                validGridPositions.Add(gridPosition);
-                continue;
-            }
+            //if (pathCache.ContainsKey(gridPosition))
+            //{
+            //    validGridPositions.Add(gridPosition);
+            //    continue;
+            //}
 
             if (!IsValidMovePosition(gridPosition)) continue;
 
@@ -117,10 +119,11 @@ public class MoveAction : BaseAction
 
             if (pathLength == 0 || pathLength > maxGridMoveDistance * 10) continue;
 
-            pathCache.Add(gridPosition, pathToPosition);
+            // pathCache.Add(gridPosition, pathToPosition);
             validGridPositions.Add(gridPosition);
         }
-        Debug.Log("Valid Move Positions: " + validGridPositions.Count);
+
+        // validGridPositionCache.AddRange(validGridPositions);
         return validGridPositions;
     }
 
@@ -150,51 +153,70 @@ public class MoveAction : BaseAction
             bestEnemyAIAction = currentPositionActionValue;
         }
 
-        // If the current position is not the highest value, then find the best position in a path to nearest player.
-        /* Refactor this and move into seperate methods.
-         * Find the player unit closest by path to this unit.
-         * Get a list of valid grid positions within weapon range around teh player unit.
-         * Select a random position from the list of best firing positions around the player unit.
-         * Move to best position along that path.
+
+        /* Refactor all of this.  All I need to do is.
+         * 1. Find the nearest player by path.
+         * 2. Return a list of valid grid positions within range of the player and their action value.
+         * 3. Return all path options for a choosen location.
+         * 4. Pick the open position within move range with the lowest F value and Lowest G value.
          */
         if (bestEnemyAIAction.actionValue == 0)
         {
 
-            bestEnemyAIAction = GetBestEnemyAIActionWhenNoTarget();
+            bestEnemyAIAction = GetBestEnemyAIMoveWhenNoTarget();
         }
         return bestEnemyAIAction;
     }
 
-    private EnemyAIAction GetBestEnemyAIActionWhenNoTarget()
+    private EnemyAIAction GetBestEnemyAIMoveWhenNoTarget()
     {
         // If there is no target, then find the best position in a path to nearest best shooting position.
-        Unit closestPlayerUnit = FindClosestPlayerByPath();
-        if (closestPlayerUnit == null) { return new EnemyAIAction(); }
-
-        List<GridPosition> possibleFiringPositions = LevelGrid.Instance.GetGridPositionsWithinRange(closestPlayerUnit.GetGridPosition(), unit.GetAction<ShootAction>().GetMaxRange());
-        List<EnemyAIAction> possibleActions = new List<EnemyAIAction>();
-
-        foreach (GridPosition gridPosition in possibleFiringPositions)
+        List<PathNode> pathValuesToClosestPlayer = FindPathValuesToClosestPlayer();
+        if (pathValuesToClosestPlayer.Count == 0)
         {
-            if(!IsValidMovePosition(gridPosition)) { continue; }
-            possibleActions.Add(GetEnemyAIActionValueForPosition(gridPosition));
+            return new EnemyAIAction
+            {
+                gridPosition = unit.GetGridPosition(),
+                actionValue = 0
+            };
         }
 
-        List<EnemyAIAction> topActions = FilterTopActions(possibleActions);
-        List<GridPosition> topPositions = new List<GridPosition>();
-
-        foreach (EnemyAIAction action in topActions)
+        List<GridPosition> validGridPositionCache = GetValidActionGridPositionList();
+        List<EnemyAIAction> enemyAIActions = new List<EnemyAIAction>();
+        foreach (PathNode pathNode in pathValuesToClosestPlayer)
         {
-            topPositions.Add(action.gridPosition);
+            GridPosition gridPosition = pathNode.GetGridPosition();
+            if (pathNode.GetGCost() < 1000 && validGridPositionCache.Contains(gridPosition))
+            {
+                enemyAIActions.Add(new EnemyAIAction
+                {
+                    gridPosition = gridPosition,
+                    actionValue = pathNode.GetGCost()
+                });
+            }
         }
 
-        GridPosition moveToPosition = FindClosestPositionByPath(topPositions);
-        List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), moveToPosition, out int pathLength);
-        return new EnemyAIAction
+        enemyAIActions = FilterTopActions(enemyAIActions);
+
+        // TODO remove this debug code
+        List<GridPosition> debugPositions = new List<GridPosition>();
+        foreach (EnemyAIAction enemyAIAction in enemyAIActions)
         {
-            gridPosition = FindDistantPointOnPath(path, maxWorldMoveDistance),
-            actionValue = 100
-        };
+            debugPositions.Add(enemyAIAction.gridPosition);
+        }
+        GridSystemVisual.Instance.ShowGridPositions(debugPositions, Color.red);
+
+        if(enemyAIActions.Count == 0)
+        {
+            return new EnemyAIAction
+            {
+                gridPosition = unit.GetGridPosition(),
+                actionValue = 0
+            };
+        }
+
+        int randomIndex = UnityEngine.Random.Range(0, enemyAIActions.Count);
+        return enemyAIActions[randomIndex];
     }
 
     public override EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition)
@@ -290,6 +312,29 @@ public class MoveAction : BaseAction
 
         return nearestPlayer;
     }
+
+    private List<PathNode> FindPathValuesToClosestPlayer()
+    {
+        List<Unit> playerUnits = UnitManager.Instance.GetPlayerUnits();
+        float shortestPathLength = Mathf.Infinity;
+        List<PathNode> pathNodes = new List<PathNode>();
+
+        // TODO: Refactor I want to filter the list of PathNodes by the valid positions and get the best G value.
+
+        foreach (Unit playerUnit in playerUnits)
+        {
+            List<GridPosition> path = Pathfinding.Instance.FindPath(unit.GetGridPosition(), playerUnit.GetGridPosition(), out int pathLength, out List<PathNode> _pathNodes);
+            if (pathLength == 0) { continue; } // No path found
+
+            if (pathLength < shortestPathLength)
+            {
+                shortestPathLength = pathLength;
+                pathNodes = _pathNodes;
+            }
+        }
+
+        return pathNodes;
+    }   
 
     private GridPosition FindClosestPositionByPath(List<GridPosition> gridPositions)
     {

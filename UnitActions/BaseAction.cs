@@ -69,11 +69,23 @@ public abstract class BaseAction : MonoBehaviour
          * It returns the grid position with the highest action value.
          * This will be used in another class to compare all best action values to determine the best action.
          */
-        List<EnemyAIAction> enemyAIActions = GetHighestActionValueList();
+        List<EnemyAIAction> enemyAIActions = new List<EnemyAIAction>();
+        List<GridPosition> validActionGridPositionList = GetValidActionGridPositionList();
+        foreach (GridPosition gridPosition in validActionGridPositionList)
+        {
+            EnemyAIAction enemyAIAction = GetEnemyAIActionValueForPosition(gridPosition);
+            enemyAIActions.Add(enemyAIAction);
+        }
+
+        enemyAIActions = GetHighestActionValueSet(enemyAIActions);
 
         if (enemyAIActions.Count == 0)
         {
-            return null;
+            return new EnemyAIAction
+            {
+                gridPosition = unit.GetGridPosition(),
+                actionValue = 0
+            };
         }
 
         int randomIndex = UnityEngine.Random.Range(0, enemyAIActions.Count);
@@ -83,16 +95,8 @@ public abstract class BaseAction : MonoBehaviour
     /*
      * This gets a list of the EnemyAIActions that share the highest actionValue score.
      *     */
-    public virtual List<EnemyAIAction> GetHighestActionValueList()
+    public virtual List<EnemyAIAction> GetHighestActionValueSet(List<EnemyAIAction> enemyAIActions)
     {
-        List<EnemyAIAction> enemyAIActions = new List<EnemyAIAction>();
-        List<GridPosition> validActionGridPositionList = GetValidActionGridPositionList();
-        foreach (GridPosition gridPosition in validActionGridPositionList)
-        {
-            EnemyAIAction enemyAIAction = GetEnemyAIActionValueForPosition(gridPosition);
-            enemyAIActions.Add(enemyAIAction);
-        }
-
         if (enemyAIActions.Count == 0)
         {
             return enemyAIActions;
@@ -102,11 +106,8 @@ public abstract class BaseAction : MonoBehaviour
         enemyAIActions.Reverse();
         int highestValue = enemyAIActions[0].actionValue;
 
-        // Filter out all actions with this top actionValue
-        List<EnemyAIAction> topActions = enemyAIActions.Where(action => action.actionValue == highestValue).ToList();
-
-        // Now topActions contains all EnemyAIAction objects with the highest actionValue
-        return topActions;
+        // Filter to only actions with the highest value
+        return enemyAIActions.Where(action => action.actionValue == highestValue).ToList();
     }
 
     public abstract EnemyAIAction GetEnemyAIActionValueForPosition(GridPosition gridPosition);

@@ -5,13 +5,13 @@ using TMPro;
 
 public class GridDebugSquare : MonoBehaviour
 {
-    [SerializeField] private TextMeshPro _textMeshPro;
+    [SerializeField] private TextMeshPro coordinatesText;
 
     private object gridSquare;
 
     protected virtual void Update()
     {
-        _textMeshPro.text = gridSquare.ToString();
+        coordinatesText.text = gridSquare.ToString();
     }
 
     public virtual void SetGridSquare(object gridSquare)
@@ -23,6 +23,6 @@ public class GridDebugSquare : MonoBehaviour
     void OnValidate()
     {
         //Simple check and complain
-        if (_textMeshPro == null) Debug.LogWarning($"{name} does not have a text mesh pro element assigned");
+        if (coordinatesText == null) Debug.LogWarning($"{name} does not have a coordinates text mesh pro element assigned");
     }
 }
