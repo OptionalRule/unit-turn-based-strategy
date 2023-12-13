@@ -183,7 +183,7 @@ public class ShootAction : BaseAction
             targetUnit = targetUnit,
             shootingUnit = unit
         });
-        int damage = GameDice.Instance.Roll(7, 10);
+        int damage = GameDice.Instance.Roll(4, 2);
         targetUnit.ApplyDamage(damage, transform.position);
     }
 

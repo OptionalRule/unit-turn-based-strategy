@@ -270,24 +270,6 @@ public class MoveAction : BaseAction
         return nearestPlayer;
     } 
 
-    private GridPosition FindClosestPositionByPath(List<GridPosition> gridPositions)
-    {
-        float shortestPath = Mathf.Infinity;
-        GridPosition closestPosition = unit.GetGridPosition();
-        foreach (GridPosition gridPosition in gridPositions)
-        {
-            Pathfinding.Instance.FindPath(unit.GetGridPosition(), gridPosition, out int pathLength);
-            if (pathLength == 0) { continue; } // No path found
-
-            if (pathLength < shortestPath)
-            {
-                shortestPath = pathLength;
-                closestPosition = gridPosition;
-            }
-        }
-        return closestPosition;
-    }
-
     // ENEMY AI ACTION VALUE METHODS
 
     private int CalculateTacticalActionValue(GridPosition position)
@@ -331,25 +313,4 @@ public class MoveAction : BaseAction
     {
         return false; // Implement logic to check if the position provides cover
     }
-
-    // OTHER UTILITY METHODS
-    List<EnemyAIAction> FilterTopActions(List<EnemyAIAction> actions)
-    {
-        if (actions == null || actions.Count == 0)
-        {
-            return new List<EnemyAIAction>(); // Return an empty list if input is null or empty.
-        }
-
-        // Sort the list based on actionValue.
-        actions.Sort();
-
-        // The last item now has the highest actionValue.
-        int topActionValue = actions[actions.Count - 1].actionValue;
-
-        // Find all actions that have this top actionValue.
-        List<EnemyAIAction> topActions = actions.FindAll(action => action.actionValue == topActionValue);
-
-        return topActions;
-    }
-
 }

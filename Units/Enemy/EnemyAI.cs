@@ -26,9 +26,6 @@ public class EnemyAI : MonoBehaviour
     private float timer;
     private float timerMax = 0.5f;
 
-    // Debug code, remove when working
-    private bool debug = false;
-
     private void Awake()
     {
         currentState = State.WaitingForEnemyTurn;
@@ -66,14 +63,6 @@ public class EnemyAI : MonoBehaviour
                 SelectAction();
                 break;
             case State.TakingUnitAction:
-                if (debug)
-                {
-                    if(Input.GetKeyDown(KeyCode.Space))
-                    {
-                        debug = false;
-                    }
-                    break;
-                }
                 timer -= Time.deltaTime;
                 if (timer <= 0f)
                 {
@@ -138,8 +127,6 @@ public class EnemyAI : MonoBehaviour
         {
             selectedEnemyAIAction = bestEnemyAIActions[0];
             timer = timerMax;
-
-            debug = true;
             currentState = State.TakingUnitAction;
         } else
         {

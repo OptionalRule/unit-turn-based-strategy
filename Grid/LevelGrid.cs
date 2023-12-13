@@ -26,6 +26,15 @@ public class LevelGrid : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        Unit.OnAnyUnitDead += Unit_OnAnyUnitDead;
+    }
+
+    private void OnDisable()
+    {
+        Unit.OnAnyUnitDead -= Unit_OnAnyUnitDead;
+    }
     private void Awake()
     {
         if(gridDebugObjectPrefab == null)
@@ -142,4 +151,13 @@ public class LevelGrid : MonoBehaviour
         return new Vector3(x, 0, z) * gridCellSize;
     }
 
+    private void Unit_OnAnyUnitDead(object sender, System.EventArgs e)
+    {
+        Unit unit = sender as Unit;
+        GridPosition gridPosition = unit.GetGridPosition();
+        if (gridPosition != null)
+        {
+            RemoveUnitFromGrid(gridPosition, unit);
+        }
+    }
 }
