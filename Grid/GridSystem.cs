@@ -59,6 +59,11 @@ public class GridSystem<TGridObject>
         return gridObjectArray[gridPosition.X, gridPosition.Z];
     }
 
+    public TGridObject GetGridObject(int x, int z)
+    {
+        return gridObjectArray[x, z];
+    }
+
     public void CreateDebugObjects(Transform debugPrefab, Transform parent)
     {
         for (int x = 0; x < width; x++)

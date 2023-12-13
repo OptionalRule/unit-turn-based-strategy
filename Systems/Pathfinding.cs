@@ -152,8 +152,6 @@ public class Pathfinding : MonoBehaviour
             }
         }
 
-        // Out of nodes on the openList
-        Debug.Log("Path not found");
         pathLength = 0;
         allPositions = closedSet;
         return null;
@@ -161,7 +159,7 @@ public class Pathfinding : MonoBehaviour
 
     private PathNode GetNode(int x, int z)
     {
-        return gridSystem.GetGridObject(new GridPosition(x, z));
+        return gridSystem.GetGridObject(x, z);
     }
 
     private void ResetPathNodes()
@@ -171,7 +169,7 @@ public class Pathfinding : MonoBehaviour
         {
             for (int z = 0; z < gridSystem.GetHeight(); z++)
             {
-                PathNode pathNode = gridSystem.GetGridObject(new GridPosition(x, z));
+                PathNode pathNode = gridSystem.GetGridObject(x, z);
                 pathNode.SetGCost(int.MaxValue);
                 pathNode.SetHCost(int.MaxValue);
                 pathNode.CalculateFCost();
@@ -248,11 +246,5 @@ public class Pathfinding : MonoBehaviour
     public bool IsWalkable(GridPosition gridPosition)
     {
         return gridSystem.GetGridObject(gridPosition).IsWalkable;
-    }
-
-    public int GetPathLength(GridPosition startGridPosition, GridPosition targetGridPosition)
-    {
-        FindPath(startGridPosition, targetGridPosition, out int pathLength);
-        return pathLength;
     }
 }
